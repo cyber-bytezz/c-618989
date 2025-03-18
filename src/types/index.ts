@@ -34,3 +34,10 @@ export interface AssetResponse {
   data: AssetData;
   timestamp: number;
 }
+
+export type TimeFrame = 'h1' | 'h12' | 'd1' | 'w1' | 'm1';
+
+export interface TimeFrameOption {
+  value: TimeFrame;
+  label: string;
+}

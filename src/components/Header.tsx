@@ -1,8 +1,11 @@
 
 import { useNavigate } from 'react-router-dom';
+import { useWatchlist } from '../contexts/WatchlistContext';
+import { Heart } from 'lucide-react';
 
 const Header = () => {
   const navigate = useNavigate();
+  const { watchlist } = useWatchlist();
 
   return (
     <header className="px-6 py-4 backdrop-blur-lg bg-white/80 border-b border-gray-200 sticky top-0 z-10">
@@ -17,8 +20,14 @@ const Header = () => {
           <span>TRACKER</span>
         </button>
         
-        <div className="text-xs font-medium px-3 py-1 rounded-full bg-neo-gray text-neo-black">
-          Powered by CoinCap API
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center">
+            <Heart size={16} className="text-neo-danger mr-1" fill="#ff3b30" />
+            <span className="text-sm font-medium">{watchlist.length}</span>
+          </div>
+          <div className="text-xs font-medium px-3 py-1 rounded-full bg-neo-gray text-neo-black">
+            Powered by CoinCap API
+          </div>
         </div>
       </div>
     </header>

@@ -1,15 +1,16 @@
 
 import { useEffect, useState } from 'react';
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { AssetHistoryData } from '../types';
+import { AssetHistoryData, TimeFrame, TimeFrameOption } from '../types';
 import { formatPrice } from '../lib/api';
 
 interface PriceChartProps {
   data: AssetHistoryData[];
   color?: string;
+  timeFrame: TimeFrame;
 }
 
-const PriceChart = ({ data, color = "#0071e3" }: PriceChartProps) => {
+const PriceChart = ({ data, color = "#0071e3", timeFrame }: PriceChartProps) => {
   const [chartData, setChartData] = useState<any[]>([]);
   
   useEffect(() => {
@@ -31,11 +32,27 @@ const PriceChart = ({ data, color = "#0071e3" }: PriceChartProps) => {
     );
   }
 
+  const formatXAxisDate = (value: string) => {
+    const date = new Date(value);
+    switch (timeFrame) {
+      case 'h1':
+      case 'h12':
+        return `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
+      case 'd1':
+        return `${date.getMonth() + 1}/${date.getDate()}`;
+      case 'w1':
+      case 'm1':
+        return `${date.getMonth() + 1}/${date.getDate()}`;
+      default:
+        return value;
+    }
+  };
+
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
         <div className="neo-brutalist-sm bg-white p-3 rounded-lg">
-          <p className="text-sm font-medium">{payload[0].payload.date}</p>
+          <p className="text-sm font-medium">{new Date(payload[0].payload.timestamp).toLocaleString()}</p>
           <p className="text-sm font-mono font-semibold">{formatPrice(payload[0].value)}</p>
         </div>
       );
@@ -61,11 +78,7 @@ const PriceChart = ({ data, color = "#0071e3" }: PriceChartProps) => {
             axisLine={false}
             tickLine={false}
             tick={{ fontSize: 12 }}
-            tickFormatter={(value) => {
-              // Just show month and day for readability
-              const date = new Date(value);
-              return `${date.getMonth() + 1}/${date.getDate()}`;
-            }}
+            tickFormatter={formatXAxisDate}
             minTickGap={30}
           />
           <YAxis 
@@ -93,5 +106,13 @@ const PriceChart = ({ data, color = "#0071e3" }: PriceChartProps) => {
     </div>
   );
 };
+
+export const TIME_FRAME_OPTIONS: TimeFrameOption[] = [
+  { value: 'h1', label: '1H' },
+  { value: 'h12', label: '12H' },
+  { value: 'd1', label: '1D' },
+  { value: 'w1', label: '7D' },
+  { value: 'm1', label: '30D' },
+];
 
 export default PriceChart;

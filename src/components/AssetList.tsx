@@ -7,7 +7,7 @@ import { ChevronUp, ChevronDown, Search } from 'lucide-react';
 
 const AssetList = () => {
   const [sortBy, setSortBy] = useState('rank');
-  const [sortDirection, setSortDirection] = useState('asc');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [searchTerm, setSearchTerm] = useState('');
   
   const { data, isLoading, error } = useQuery({

@@ -1,5 +1,5 @@
 
-import { AssetsResponse, AssetHistoryResponse, AssetResponse } from "../types";
+import { AssetsResponse, AssetHistoryResponse, AssetResponse, TimeFrame } from "../types";
 
 const BASE_URL = "https://api.coincap.io/v2";
 
@@ -25,9 +25,22 @@ export async function fetchAsset(id: string): Promise<AssetResponse> {
 
 export async function fetchAssetHistory(
   id: string, 
-  interval: string = "d1"
+  interval: TimeFrame = "d1"
 ): Promise<AssetHistoryResponse> {
-  const response = await fetch(`${BASE_URL}/assets/${id}/history?interval=${interval}`);
+  // Adjust the interval for API compatibility
+  let apiInterval = interval;
+  let historyPeriod = "";
+  
+  // For weekly and monthly views, we need to adjust the parameters
+  if (interval === 'w1') {
+    apiInterval = 'd1';
+    historyPeriod = "&start=" + (Date.now() - 7 * 24 * 60 * 60 * 1000);
+  } else if (interval === 'm1') {
+    apiInterval = 'd1';
+    historyPeriod = "&start=" + (Date.now() - 30 * 24 * 60 * 60 * 1000);
+  }
+  
+  const response = await fetch(`${BASE_URL}/assets/${id}/history?interval=${apiInterval}${historyPeriod}`);
   
   if (!response.ok) {
     throw new Error(`Failed to fetch asset history: ${response.status}`);
