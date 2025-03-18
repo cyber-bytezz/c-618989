@@ -1,12 +1,20 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import Header from "../components/Header";
+import AssetList from "../components/AssetList";
 
 const Index = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen bg-neo-gray">
+      <Header />
+      <main className="animate-slide-up">
+        <div className="pt-8 pb-6 text-center">
+          <h1 className="text-4xl font-bold tracking-tight mb-2">Crypto Asset Tracker</h1>
+          <p className="text-gray-600 max-w-lg mx-auto">
+            Track top cryptocurrencies ranked by market cap
+          </p>
+        </div>
+        <AssetList />
+      </main>
     </div>
   );
 };
