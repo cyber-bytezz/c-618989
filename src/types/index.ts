@@ -41,3 +41,19 @@ export interface TimeFrameOption {
   value: TimeFrame;
   label: string;
 }
+
+export type MarketSentiment = 
+  | 'extreme_fear' 
+  | 'fear' 
+  | 'neutral' 
+  | 'positive' 
+  | 'greed' 
+  | 'extreme_greed';
+
+export interface SortOption {
+  id: string;
+  label: string;
+  sortFn: (a: AssetData, b: AssetData) => number;
+}
+
+export type AssetCategory = 'all' | 'gainers' | 'losers' | 'trending';

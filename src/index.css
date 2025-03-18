@@ -108,4 +108,54 @@
   .animate-float {
     animation: float 3s ease-in-out infinite;
   }
+  
+  /* New shimmer animation */
+  @keyframes shimmer {
+    100% { transform: translateX(100%); }
+  }
+  
+  .animate-shimmer {
+    animation: shimmer 1.5s infinite;
+  }
+  
+  /* Pulse slow animation */
+  @keyframes pulse-slow {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+  
+  .animate-pulse-slow {
+    animation: pulse-slow 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  /* Background gradient animation */
+  @keyframes gradient-shift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  
+  .bg-animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient-shift 3s ease infinite;
+  }
+  
+  /* Price flash animation */
+  @keyframes price-up {
+    0%, 100% { background-color: transparent; }
+    50% { background-color: rgba(52, 199, 89, 0.1); }
+  }
+  
+  @keyframes price-down {
+    0%, 100% { background-color: transparent; }
+    50% { background-color: rgba(255, 59, 48, 0.1); }
+  }
+  
+  .price-flash-up {
+    animation: price-up 0.8s ease-in-out;
+  }
+  
+  .price-flash-down {
+    animation: price-down 0.8s ease-in-out;
+  }
 }

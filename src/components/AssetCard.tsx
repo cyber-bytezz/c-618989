@@ -1,10 +1,10 @@
 
 import { Link } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
 import { AssetData } from '../types';
 import { formatMarketCap, formatPrice, formatPercent } from '../lib/api';
 import { ArrowDown, ArrowUp, Heart } from 'lucide-react';
 import { useWatchlist } from '../contexts/WatchlistContext';
-import { useState } from 'react';
 
 interface AssetCardProps {
   asset: AssetData;
@@ -15,6 +15,22 @@ const AssetCard = ({ asset }: AssetCardProps) => {
   const isPositive = changePercent > 0;
   const { isInWatchlist, addToWatchlist, removeFromWatchlist } = useWatchlist();
   const [isHovered, setIsHovered] = useState(false);
+  const [priceFlash, setPriceFlash] = useState<'none' | 'up' | 'down'>('none');
+  const prevPriceRef = useRef(asset.priceUsd);
+  
+  // Flash price on updates
+  useEffect(() => {
+    const currentPrice = parseFloat(asset.priceUsd);
+    const prevPrice = parseFloat(prevPriceRef.current);
+    
+    if (prevPriceRef.current && currentPrice !== prevPrice) {
+      setPriceFlash(currentPrice > prevPrice ? 'up' : 'down');
+      const timer = setTimeout(() => setPriceFlash('none'), 800);
+      return () => clearTimeout(timer);
+    }
+    
+    prevPriceRef.current = asset.priceUsd;
+  }, [asset.priceUsd]);
   
   const toggleWatchlist = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -49,7 +65,12 @@ const AssetCard = ({ asset }: AssetCardProps) => {
           </div>
         </div>
         <div className="text-right">
-          <div className="font-mono font-semibold text-lg">{formatPrice(asset.priceUsd)}</div>
+          <div className={`font-mono font-semibold text-lg ${
+            priceFlash === 'up' ? 'price-flash-up' : 
+            priceFlash === 'down' ? 'price-flash-down' : ''
+          }`}>
+            {formatPrice(asset.priceUsd)}
+          </div>
           <div className={`flex items-center justify-end text-sm ${isPositive ? 'text-neo-success' : 'text-neo-danger'}`}>
             {isPositive ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
             <span>{formatPercent(asset.changePercent24Hr)}</span>
@@ -68,9 +89,11 @@ const AssetCard = ({ asset }: AssetCardProps) => {
         <button 
           onClick={toggleWatchlist}
           className="ml-2 p-2 rounded-full hover:bg-gray-100 transition-colors"
+          aria-label={isInWatchlist(asset.id) ? "Remove from watchlist" : "Add to watchlist"}
         >
           <Heart 
             size={18} 
+            className="transition-transform duration-300 hover:scale-110"
             fill={isInWatchlist(asset.id) ? "#ff3b30" : "none"} 
             stroke={isInWatchlist(asset.id) ? "#ff3b30" : "currentColor"}
           />

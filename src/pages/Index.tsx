@@ -3,27 +3,31 @@ import { useState } from 'react';
 import Header from "../components/Header";
 import AssetList from "../components/AssetList";
 import { useWatchlist } from "../contexts/WatchlistContext";
-import { useQuery } from "@tanstack/react-query";
+import { useRealTimeData } from "../hooks/useRealTimeData";
 import { fetchAsset } from "../lib/api";
 import AssetCard from "../components/AssetCard";
+import LoadingSkeleton from "../components/LoadingSkeleton";
 import { Zap } from "lucide-react";
 
 const Index = () => {
   const [showWatchlist, setShowWatchlist] = useState(false);
   const { watchlist } = useWatchlist();
   
-  // Fetch data for watchlist assets
-  const { data: watchlistData, isLoading: watchlistLoading } = useQuery({
-    queryKey: ['watchlist', watchlist],
-    queryFn: async () => {
+  // Fetch data for watchlist assets with real-time updates
+  const { data: watchlistData, isLoading: watchlistLoading } = useRealTimeData(
+    ['watchlist', watchlist],
+    async () => {
       if (watchlist.length === 0) return [];
       
       const promises = watchlist.map(id => fetchAsset(id));
       const results = await Promise.all(promises);
       return results.map(result => result.data);
     },
-    enabled: watchlist.length > 0 && showWatchlist,
-  });
+    {
+      enabled: watchlist.length > 0 && showWatchlist,
+      pollingInterval: 30000, // 30 seconds
+    }
+  );
   
   return (
     <div className="min-h-screen bg-neo-gray">
@@ -32,7 +36,7 @@ const Index = () => {
         <div className="pt-8 pb-6 text-center">
           <div className="flex items-center justify-center mb-3">
             <div className="bg-neo-black text-white p-3 rounded-xl mr-3 shadow-[5px_5px_0px_0px_rgba(0,113,227,1)]">
-              <Zap size={30} className="text-neo-accent" />
+              <Zap size={30} className="text-neo-accent animate-pulse-slow" />
             </div>
             <h1 className="text-4xl font-bold tracking-tight">Crypto Asset Tracker</h1>
           </div>
@@ -45,7 +49,7 @@ const Index = () => {
               onClick={() => setShowWatchlist(false)}
               className={`px-5 py-2 rounded-xl font-medium transition-all duration-200 ${
                 !showWatchlist 
-                  ? 'neo-brutalist bg-white' 
+                  ? 'neo-brutalist bg-white transform -translate-y-1' 
                   : 'hover:bg-white/50'
               }`}
             >
@@ -55,7 +59,7 @@ const Index = () => {
               onClick={() => setShowWatchlist(true)}
               className={`px-5 py-2 rounded-xl font-medium transition-all duration-200 flex items-center ${
                 showWatchlist 
-                  ? 'neo-brutalist bg-white' 
+                  ? 'neo-brutalist bg-white transform -translate-y-1' 
                   : 'hover:bg-white/50'
               }`}
               disabled={watchlist.length === 0}
@@ -84,9 +88,7 @@ const Index = () => {
               </div>
             ) : watchlistLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[...Array(watchlist.length)].map((_, i) => (
-                  <div key={i} className="h-36 rounded-xl bg-gray-100 animate-pulse-slow"></div>
-                ))}
+                <LoadingSkeleton count={watchlist.length} variant="card" />
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in">
