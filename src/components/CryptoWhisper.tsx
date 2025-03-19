@@ -160,12 +160,14 @@ const CryptoWhisper = () => {
           />
         </div>
         
-        <style jsx>{`
-          @keyframes countdown {
-            from { width: 100%; }
-            to { width: 0%; }
-          }
-        `}</style>
+        <style>
+          {`
+            @keyframes countdown {
+              from { width: 100%; }
+              to { width: 0%; }
+            }
+          `}
+        </style>
       </div>
       
       <CryptoWhisperReactions insightId={insight.id.toString()} />

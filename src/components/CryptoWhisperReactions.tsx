@@ -74,7 +74,7 @@ const CryptoWhisperReactions = ({ insightId }: { insightId: string }) => {
     // If user already reacted, toggle it off
     if (userReacted === emoji) {
       parsedReactions[insightId][emoji]--;
-      parsedReactions[insightId].userReacted = undefined;
+      delete parsedReactions[insightId].userReacted;
       setUserReacted(null);
       
       // Update UI
