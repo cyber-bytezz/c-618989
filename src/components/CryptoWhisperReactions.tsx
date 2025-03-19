@@ -14,7 +14,7 @@ interface Reaction {
 interface ReactionStates {
   [key: string]: {
     [reactionType: string]: number;
-    userReacted?: string;
+    userReacted?: string | undefined;
   };
 }
 

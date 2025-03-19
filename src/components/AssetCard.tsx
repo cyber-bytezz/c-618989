@@ -48,23 +48,13 @@ const AssetCard = ({ asset }: AssetCardProps) => {
   return (
     <Link 
       to={`/asset/${asset.id}`}
-      className={`neo-brutalist-sm group block ${isDark ? 'bg-gray-800' : 'bg-white'} rounded-xl p-4 hover:translate-y-[-2px] transition-all duration-200`}
+      className="crypto-card group transition-all duration-200"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      style={{
-        transform: isHovered ? 'translateY(-2px) rotate(0.5deg)' : 'translateY(0) rotate(0deg)',
-        boxShadow: isHovered 
-          ? isDark 
-            ? '6px 6px 0px 0px rgba(0,113,227,1)' 
-            : '6px 6px 0px 0px rgba(0,0,0,1)' 
-          : isDark 
-            ? '2px 2px 0px 0px rgba(0,113,227,1)' 
-            : '2px 2px 0px 0px rgba(0,0,0,1)',
-      }}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center">
-          <div className={`flex items-center justify-center w-10 h-10 rounded-full ${isDark ? 'bg-gray-700' : 'bg-neo-gray'} font-mono text-sm mr-3`}>
+          <div className={`flex items-center justify-center w-10 h-10 rounded-full ${isDark ? 'bg-gray-800' : 'bg-gray-100'} font-mono text-sm mr-3`}>
             {asset.rank}
           </div>
           <div>
@@ -79,13 +69,13 @@ const AssetCard = ({ asset }: AssetCardProps) => {
           }`}>
             {formatPrice(asset.priceUsd)}
           </div>
-          <div className={`flex items-center justify-end text-sm ${isPositive ? 'text-neo-success' : 'text-neo-danger'}`}>
+          <div className={`flex items-center justify-end text-sm ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
             {isPositive ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
             <span>{formatPercent(asset.changePercent24Hr)}</span>
           </div>
         </div>
       </div>
-      <div className={`mt-3 pt-3 border-t border-dashed ${isDark ? 'border-gray-700' : 'border-gray-200'} flex justify-between items-center`}>
+      <div className={`mt-3 pt-3 border-t ${isDark ? 'border-gray-700/30' : 'border-gray-200/50'} flex justify-between items-center`}>
         <div>
           <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Market Cap</div>
           <div className="font-mono text-sm">{formatMarketCap(asset.marketCapUsd)}</div>
@@ -96,7 +86,7 @@ const AssetCard = ({ asset }: AssetCardProps) => {
         </div>
         <button 
           onClick={toggleWatchlist}
-          className={`ml-2 p-2 rounded-full ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors`}
+          className={`ml-2 p-2 rounded-full ${isDark ? 'hover:bg-gray-700/50' : 'hover:bg-gray-100/50'} transition-colors`}
           aria-label={isInWatchlist(asset.id) ? "Remove from watchlist" : "Add to watchlist"}
         >
           <Heart 
