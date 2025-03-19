@@ -209,7 +209,7 @@
 
   .crypto-card {
     @apply bg-gradient-to-br from-card/70 to-card/30 backdrop-blur-lg border border-white/10 dark:border-gray-700/30 
-    rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 p-4;
+    rounded-xl shadow-lg hover:shadow-xl transition-all duration-200;
   }
 
   .sidebar-item {
@@ -223,5 +223,41 @@
 
   .gradient-text {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-cyan-400;
+  }
+  
+  /* Responsive improvements */
+  .responsive-grid {
+    @apply grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+  }
+  
+  .responsive-card {
+    @apply p-3 sm:p-4 md:p-5;
+  }
+  
+  .responsive-text {
+    @apply text-sm sm:text-base md:text-lg;
+  }
+  
+  .responsive-heading {
+    @apply text-xl sm:text-2xl md:text-3xl font-bold;
+  }
+  
+  /* Mobile-specific styles */
+  @media (max-width: 640px) {
+    .mobile-compact {
+      @apply p-2 space-y-2;
+    }
+    
+    .mobile-hide {
+      @apply hidden;
+    }
+    
+    .mobile-show {
+      @apply block;
+    }
+    
+    .mobile-full-width {
+      @apply w-full;
+    }
   }
 }

@@ -1,4 +1,3 @@
-
 export interface AssetData {
   id: string;
   rank: string;
@@ -14,41 +13,7 @@ export interface AssetData {
   explorer: string;
 }
 
-export interface AssetsResponse {
-  data: AssetData[];
-  timestamp: number;
-}
-
-export interface AssetHistoryData {
-  priceUsd: string;
-  time: number;
-  date: string;
-}
-
-export interface AssetHistoryResponse {
-  data: AssetHistoryData[];
-  timestamp: number;
-}
-
-export interface AssetResponse {
-  data: AssetData;
-  timestamp: number;
-}
-
-export type TimeFrame = 'h1' | 'h12' | 'd1' | 'w1' | 'm1';
-
-export interface TimeFrameOption {
-  value: TimeFrame;
-  label: string;
-}
-
-export type MarketSentiment = 
-  | 'extreme_fear' 
-  | 'fear' 
-  | 'neutral' 
-  | 'positive' 
-  | 'greed' 
-  | 'extreme_greed';
+export type AssetCategory = 'all' | 'gainers' | 'losers' | 'trending';
 
 export interface SortOption {
   id: string;
@@ -56,4 +21,15 @@ export interface SortOption {
   sortFn: (a: AssetData, b: AssetData) => number;
 }
 
-export type AssetCategory = 'all' | 'gainers' | 'losers' | 'trending';
+export interface TimeFrameOption {
+  value: TimeFrame;
+  label: string;
+}
+
+export type TimeFrame = 'h1' | 'h12' | 'd1' | 'w1' | 'm1';
+
+export interface AssetHistoryData {
+  priceUsd: string;
+  time: number;
+  date: string;
+}

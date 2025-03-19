@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import Header from "../components/Header";
 import AssetList from "../components/AssetList";
@@ -7,7 +6,7 @@ import { useRealTimeData } from "../hooks/useRealTimeData";
 import { fetchAsset } from "../lib/api";
 import AssetCard from "../components/AssetCard";
 import LoadingSkeleton from "../components/LoadingSkeleton";
-import { Zap, ArrowTrendingUp } from "lucide-react";
+import { TrendingUp, Zap } from "lucide-react";
 import CryptoWhisper from "../components/CryptoWhisper";
 import PanicMeter from "../components/PanicMeter";
 import UserXPSystem from "../components/UserXPSystem";
@@ -20,7 +19,6 @@ const Index = () => {
   const { watchlist } = useWatchlist();
   const { isDark } = useTheme();
   
-  // Fetch data for watchlist assets with real-time updates
   const { data: watchlistData, isLoading: watchlistLoading } = useRealTimeData(
     ['watchlist', ...watchlist], 
     async () => {
@@ -43,7 +41,7 @@ const Index = () => {
         <div className="pt-6 pb-4 text-center">
           <div className="flex items-center justify-center mb-3">
             <div className="bg-blue-500 text-white p-2 rounded-xl mr-3 shadow-lg">
-              <ArrowTrendingUp size={24} className="text-white" />
+              <TrendingUp size={24} className="text-white" />
             </div>
             <h1 className="text-3xl font-bold tracking-tight gradient-text">Crypto Tracker</h1>
           </div>
@@ -83,10 +81,8 @@ const Index = () => {
         
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
-            {/* Crypto Whisper Component */}
             <CryptoWhisper />
             
-            {/* Panic Meter - Only shows during significant drops */}
             <PanicMeter />
             
             {showWatchlist ? (
@@ -121,13 +117,10 @@ const Index = () => {
           </div>
           
           <div className="space-y-6">
-            {/* HODL vs Sell Sentiment */}
             <HODLSentiment />
             
-            {/* Market Predictions */}
             <MarketPredictions />
             
-            {/* User XP System */}
             <UserXPSystem />
           </div>
         </div>
