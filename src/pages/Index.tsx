@@ -15,7 +15,7 @@ const Index = () => {
   
   // Fetch data for watchlist assets with real-time updates
   const { data: watchlistData, isLoading: watchlistLoading } = useRealTimeData(
-    ['watchlist', watchlist],
+    ['watchlist', ...watchlist], // Spread the watchlist array into the queryKey array
     async () => {
       if (watchlist.length === 0) return [];
       

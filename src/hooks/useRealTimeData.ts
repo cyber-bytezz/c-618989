@@ -1,5 +1,5 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, UseQueryOptions } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 
 /**
@@ -11,7 +11,7 @@ export function useRealTimeData<T>(
   options?: {
     enabled?: boolean;
     pollingInterval?: number;
-    initialData?: T;
+    initialData?: T | (() => T);
     onSuccess?: (data: T) => void;
   }
 ) {
@@ -24,7 +24,8 @@ export function useRealTimeData<T>(
     onSuccess
   } = options || {};
 
-  const query = useQuery({
+  // Create a query options object that's compatible with @tanstack/react-query
+  const queryOptions: UseQueryOptions<T, Error, T, string[]> = {
     queryKey,
     queryFn: fetchFn,
     refetchInterval: isPaused ? false : pollingInterval,
@@ -32,8 +33,17 @@ export function useRealTimeData<T>(
     initialData,
     refetchOnWindowFocus: true,
     staleTime: pollingInterval / 2,
-    onSuccess,
-  });
+  };
+
+  // Add onSuccess callback outside the queryOptions to avoid TypeScript error
+  const query = useQuery(queryOptions);
+
+  // Set up our onSuccess handler manually
+  useEffect(() => {
+    if (query.data && onSuccess) {
+      onSuccess(query.data);
+    }
+  }, [query.data, onSuccess]);
 
   // Allow manually pausing/resuming polling
   const togglePolling = () => setIsPaused(prev => !prev);

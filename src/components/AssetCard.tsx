@@ -5,6 +5,7 @@ import { AssetData } from '../types';
 import { formatMarketCap, formatPrice, formatPercent } from '../lib/api';
 import { ArrowDown, ArrowUp, Heart } from 'lucide-react';
 import { useWatchlist } from '../contexts/WatchlistContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface AssetCardProps {
   asset: AssetData;
@@ -17,6 +18,7 @@ const AssetCard = ({ asset }: AssetCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [priceFlash, setPriceFlash] = useState<'none' | 'up' | 'down'>('none');
   const prevPriceRef = useRef(asset.priceUsd);
+  const { isDark } = useTheme();
   
   // Flash price on updates
   useEffect(() => {
@@ -46,22 +48,28 @@ const AssetCard = ({ asset }: AssetCardProps) => {
   return (
     <Link 
       to={`/asset/${asset.id}`}
-      className="neo-brutalist-sm group block bg-white rounded-xl p-4 hover:translate-y-[-2px] transition-all duration-200"
+      className={`neo-brutalist-sm group block ${isDark ? 'bg-gray-800' : 'bg-white'} rounded-xl p-4 hover:translate-y-[-2px] transition-all duration-200`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={{
         transform: isHovered ? 'translateY(-2px) rotate(0.5deg)' : 'translateY(0) rotate(0deg)',
-        boxShadow: isHovered ? '6px 6px 0px 0px rgba(0,0,0,1)' : '2px 2px 0px 0px rgba(0,0,0,1)',
+        boxShadow: isHovered 
+          ? isDark 
+            ? '6px 6px 0px 0px rgba(0,113,227,1)' 
+            : '6px 6px 0px 0px rgba(0,0,0,1)' 
+          : isDark 
+            ? '2px 2px 0px 0px rgba(0,113,227,1)' 
+            : '2px 2px 0px 0px rgba(0,0,0,1)',
       }}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center">
-          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-neo-gray font-mono text-sm mr-3">
+          <div className={`flex items-center justify-center w-10 h-10 rounded-full ${isDark ? 'bg-gray-700' : 'bg-neo-gray'} font-mono text-sm mr-3`}>
             {asset.rank}
           </div>
           <div>
             <h3 className="font-medium text-lg">{asset.name}</h3>
-            <div className="text-sm text-gray-500">{asset.symbol}</div>
+            <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{asset.symbol}</div>
           </div>
         </div>
         <div className="text-right">
@@ -77,18 +85,18 @@ const AssetCard = ({ asset }: AssetCardProps) => {
           </div>
         </div>
       </div>
-      <div className="mt-3 pt-3 border-t border-dashed border-gray-200 flex justify-between items-center">
+      <div className={`mt-3 pt-3 border-t border-dashed ${isDark ? 'border-gray-700' : 'border-gray-200'} flex justify-between items-center`}>
         <div>
-          <div className="text-xs text-gray-500">Market Cap</div>
+          <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Market Cap</div>
           <div className="font-mono text-sm">{formatMarketCap(asset.marketCapUsd)}</div>
         </div>
         <div className="text-right">
-          <div className="text-xs text-gray-500">24h Volume</div>
+          <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>24h Volume</div>
           <div className="font-mono text-sm">{formatMarketCap(asset.volumeUsd24Hr)}</div>
         </div>
         <button 
           onClick={toggleWatchlist}
-          className="ml-2 p-2 rounded-full hover:bg-gray-100 transition-colors"
+          className={`ml-2 p-2 rounded-full ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors`}
           aria-label={isInWatchlist(asset.id) ? "Remove from watchlist" : "Add to watchlist"}
         >
           <Heart 

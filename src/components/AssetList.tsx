@@ -1,13 +1,23 @@
-
 import { useState } from 'react';
 import { useRealTimeData } from '../hooks/useRealTimeData';
-import { fetchAssets, fetchTopGainers, fetchTopLosers, fetchTrendingAssets, calculateMarketSentiment } from '../lib/api';
+import { 
+  fetchAssets, 
+  fetchTopGainers, 
+  fetchTopLosers, 
+  fetchTrendingAssets, 
+  calculateMarketSentiment, 
+  clearApiCache 
+} from '../lib/api';
 import AssetCard from './AssetCard';
 import MarketSentiment from './MarketSentiment';
 import LoadingSkeleton from './LoadingSkeleton';
-import { ChevronUp, ChevronDown, Search, Zap, TrendingUp, TrendingDown, BarChart4 } from 'lucide-react';
+import { ChevronUp, ChevronDown, Search, Zap, TrendingUp, TrendingDown, BarChart4, RefreshCw } from 'lucide-react';
 import { AssetCategory, AssetData, SortOption } from '../types';
 import { toast } from 'sonner';
+import ThemeToggle from './ThemeToggle';
+import RefreshTimer from './RefreshTimer';
+import MostWatchedAssets from './MostWatchedAssets';
+import { useTheme } from '../contexts/ThemeContext';
 
 const sortOptions: SortOption[] = [
   {
@@ -54,8 +64,8 @@ const AssetList = () => {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [searchTerm, setSearchTerm] = useState('');
   const [category, setCategory] = useState<AssetCategory>('all');
+  const { isDark } = useTheme();
   
-  // Fetch the appropriate category data
   const fetchCategoryData = () => {
     switch (category) {
       case 'gainers': return fetchTopGainers();
@@ -71,26 +81,24 @@ const AssetList = () => {
     error, 
     dataUpdatedAt,
     isPaused,
-    togglePolling
+    togglePolling,
+    refetch
   } = useRealTimeData(
     ['assets', category],
     fetchCategoryData,
     { 
       pollingInterval: 30000, // 30 seconds
-      onSuccess: (newData) => {
-        const lastUpdated = new Date(dataUpdatedAt);
-        const now = new Date();
-        
-        // Only show toast if there was a previous update (not first load)
-        if (dataUpdatedAt && now.getTime() - lastUpdated.getTime() > 1000) {
-          toast("Data refreshed", {
-            description: `Latest crypto prices updated just now`,
-            position: "bottom-right"
-          });
-        }
-      }
     }
   );
+  
+  const handleRefresh = () => {
+    clearApiCache();
+    refetch();
+    toast.success("Refreshing data", {
+      description: "Fetching the latest crypto prices",
+      position: "bottom-right"
+    });
+  };
   
   const toggleSort = (field: string) => {
     if (sortBy === field) {
@@ -106,7 +114,6 @@ const AssetList = () => {
     asset.symbol.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
   
-  // Find the current sort function
   const currentSortOption = sortOptions.find(option => option.id === sortBy);
   
   const sortedAssets = [...filteredAssets].sort((a, b) => {
@@ -114,11 +121,14 @@ const AssetList = () => {
     return sortDirection === 'asc' ? comparison : -comparison;
   });
 
-  // Calculate market sentiment
   const marketSentiment = data ? calculateMarketSentiment(data) : 'neutral';
 
   return (
-    <div className="max-w-4xl mx-auto py-8 px-4">
+    <div className={`max-w-4xl mx-auto py-8 px-4 ${isDark ? 'dark text-white' : ''}`}>
+      <div className="flex justify-end mb-4">
+        <ThemeToggle />
+      </div>
+      
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div className="relative flex-1">
           <input
@@ -126,16 +136,17 @@ const AssetList = () => {
             placeholder="Search assets..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="neo-brutalist-sm w-full px-4 py-3 pl-10 rounded-xl bg-white"
+            className="neo-brutalist-sm w-full px-4 py-3 pl-10 rounded-xl bg-white dark:bg-gray-800 dark:text-white"
           />
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
         </div>
         
-        <div className="flex items-center">
-          <MarketSentiment sentiment={marketSentiment} className="mr-3" />
+        <div className="flex items-center space-x-2">
+          <MarketSentiment sentiment={marketSentiment} />
+          
           <button 
             onClick={togglePolling}
-            className={`p-2 rounded-full ${isPaused ? 'bg-red-100' : 'bg-green-100'} transition-colors`}
+            className={`p-2 rounded-full ${isPaused ? 'bg-red-100 dark:bg-red-900' : 'bg-green-100 dark:bg-green-900'} transition-colors`}
             title={isPaused ? "Resume auto-updates" : "Pause auto-updates"}
           >
             <Zap 
@@ -144,8 +155,25 @@ const AssetList = () => {
               fill={isPaused ? 'none' : 'currentColor'}
             />
           </button>
+          
+          <button
+            onClick={handleRefresh}
+            className="p-2 rounded-full bg-blue-100 hover:bg-blue-200 transition-colors dark:bg-blue-900 dark:hover:bg-blue-800"
+            title="Refresh data"
+          >
+            <RefreshCw size={16} className="text-neo-accent" />
+          </button>
         </div>
       </div>
+      
+      {dataUpdatedAt && (
+        <div className="flex justify-end mb-3">
+          <RefreshTimer 
+            lastUpdated={dataUpdatedAt} 
+            pollingInterval={30000} 
+          />
+        </div>
+      )}
       
       <div className="flex flex-wrap gap-2 mb-4">
         {categoryOptions.map(cat => (
@@ -171,28 +199,58 @@ const AssetList = () => {
         ))}
       </div>
       
-      {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-          <LoadingSkeleton count={8} variant="card" />
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3 mt-6">
+        <div className="md:col-span-2">
+          {isLoading ? (
+            <div className="grid grid-cols-1 gap-4">
+              <LoadingSkeleton count={5} variant="card" />
+            </div>
+          ) : error ? (
+            <div className="neo-brutalist p-6 bg-neo-danger text-white mt-6">
+              <h2 className="text-xl font-bold mb-2">Error loading assets</h2>
+              <p>Please try again later.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 animate-fade-in">
+              {sortedAssets.map(asset => (
+                <AssetCard key={asset.id} asset={asset} />
+              ))}
+            </div>
+          )}
+          
+          {sortedAssets.length === 0 && !isLoading && (
+            <div className="text-center py-10">
+              <p className="text-gray-500 dark:text-gray-400">No assets found matching "{searchTerm}"</p>
+            </div>
+          )}
         </div>
-      ) : error ? (
-        <div className="neo-brutalist p-6 bg-neo-danger text-white mt-6">
-          <h2 className="text-xl font-bold mb-2">Error loading assets</h2>
-          <p>Please try again later.</p>
+        
+        <div className="space-y-4">
+          <MostWatchedAssets />
+          
+          <div className="neo-brutalist-sm bg-white p-4 rounded-xl dark:bg-gray-800">
+            <h3 className="text-lg font-semibold mb-3">Pro Trading Tips</h3>
+            <ul className="space-y-2 text-sm">
+              <li className="flex items-start">
+                <span className="bg-neo-accent text-white rounded-full w-5 h-5 flex items-center justify-center mr-2 mt-0.5">1</span>
+                <p>Use volume as a confirmation indicator for price movements</p>
+              </li>
+              <li className="flex items-start">
+                <span className="bg-neo-accent text-white rounded-full w-5 h-5 flex items-center justify-center mr-2 mt-0.5">2</span>
+                <p>Set stop losses to protect your investments from sudden market drops</p>
+              </li>
+              <li className="flex items-start">
+                <span className="bg-neo-accent text-white rounded-full w-5 h-5 flex items-center justify-center mr-2 mt-0.5">3</span>
+                <p>Diversify your portfolio across different asset classes</p>
+              </li>
+              <li className="flex items-start">
+                <span className="bg-neo-accent text-white rounded-full w-5 h-5 flex items-center justify-center mr-2 mt-0.5">4</span>
+                <p>Consider dollar-cost averaging for long-term investments</p>
+              </li>
+            </ul>
+          </div>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in mt-6">
-          {sortedAssets.map(asset => (
-            <AssetCard key={asset.id} asset={asset} />
-          ))}
-        </div>
-      )}
-      
-      {sortedAssets.length === 0 && !isLoading && (
-        <div className="text-center py-10">
-          <p className="text-gray-500">No assets found matching "{searchTerm}"</p>
-        </div>
-      )}
+      </div>
     </div>
   );
 };

@@ -1,3 +1,4 @@
+
 import { AssetsResponse, AssetHistoryResponse, AssetResponse, TimeFrame, MarketSentiment } from "../types";
 
 const BASE_URL = "https://api.coincap.io/v2";
@@ -5,6 +6,27 @@ const BASE_URL = "https://api.coincap.io/v2";
 // Cache map to store recent responses and timestamps
 const cache: Map<string, { data: any, timestamp: number }> = new Map();
 const CACHE_TTL = 15000; // 15 seconds cache
+
+// Implement request throttling
+let lastRequestTime = 0;
+const MIN_REQUEST_INTERVAL = 300; // 300ms between requests to avoid rate limiting
+
+/**
+ * Throttles API requests to avoid rate limiting
+ */
+async function throttledFetch(url: string): Promise<Response> {
+  const now = Date.now();
+  const timeElapsed = now - lastRequestTime;
+  
+  // If we've made a request too recently, wait for the minimum interval
+  if (timeElapsed < MIN_REQUEST_INTERVAL) {
+    await new Promise(resolve => setTimeout(resolve, MIN_REQUEST_INTERVAL - timeElapsed));
+  }
+  
+  // Update last request time and perform the fetch
+  lastRequestTime = Date.now();
+  return fetch(url);
+}
 
 /**
  * Fetches data with built-in caching to reduce API calls
@@ -15,10 +37,12 @@ async function fetchWithCache<T>(url: string, cacheTTL: number = CACHE_TTL): Pro
   
   // Return cached response if valid
   if (cachedResponse && now - cachedResponse.timestamp < cacheTTL) {
+    console.log(`Using cached data for ${url}`);
     return cachedResponse.data as T;
   }
   
-  const response = await fetch(url);
+  console.log(`Fetching fresh data for ${url}`);
+  const response = await throttledFetch(url);
   
   if (!response.ok) {
     throw new Error(`API request failed: ${response.status}`);
@@ -32,8 +56,14 @@ async function fetchWithCache<T>(url: string, cacheTTL: number = CACHE_TTL): Pro
   return data as T;
 }
 
-export async function fetchAssets(): Promise<AssetsResponse> {
-  return fetchWithCache<AssetsResponse>(`${BASE_URL}/assets?limit=20`);
+// Cache clearing function to force fresh data
+export function clearApiCache() {
+  cache.clear();
+  console.log('API cache cleared');
+}
+
+export async function fetchAssets(limit: number = 20): Promise<AssetsResponse> {
+  return fetchWithCache<AssetsResponse>(`${BASE_URL}/assets?limit=${limit}`);
 }
 
 export async function fetchTopGainers(): Promise<AssetsResponse> {
@@ -123,8 +153,28 @@ export function calculateMarketSentiment(assets: AssetsResponse): MarketSentimen
   if (averageChange > 0.5) return "positive";
   if (averageChange > -0.5) return "neutral";
   if (averageChange > -2) return "fear";
-  if (averageChange > -5) return "extreme_fear";
   return "extreme_fear";
+}
+
+export function calculateVolatility(priceHistory: AssetHistoryData[]): number {
+  if (!priceHistory || priceHistory.length < 2) return 0;
+  
+  // Calculate daily returns
+  const returns: number[] = [];
+  for (let i = 1; i < priceHistory.length; i++) {
+    const prevPrice = parseFloat(priceHistory[i-1].priceUsd);
+    const currentPrice = parseFloat(priceHistory[i].priceUsd);
+    const dailyReturn = (currentPrice - prevPrice) / prevPrice;
+    returns.push(dailyReturn);
+  }
+  
+  // Calculate standard deviation of returns (volatility)
+  const mean = returns.reduce((sum, val) => sum + val, 0) / returns.length;
+  const squaredDiffs = returns.map(val => Math.pow(val - mean, 2));
+  const variance = squaredDiffs.reduce((sum, val) => sum + val, 0) / squaredDiffs.length;
+  const volatility = Math.sqrt(variance) * 100; // Convert to percentage
+  
+  return volatility;
 }
 
 export function formatPrice(price: string | number): string {
