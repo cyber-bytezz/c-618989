@@ -1,5 +1,5 @@
 
-import { AssetsResponse, AssetHistoryResponse, AssetResponse, TimeFrame, MarketSentiment } from "../types";
+import { AssetsResponse, AssetHistoryResponse, AssetResponse, TimeFrame, MarketSentiment, AssetHistoryData } from "../types";
 
 const BASE_URL = "https://api.coincap.io/v2";
 

@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import Header from "../components/Header";
 import AssetList from "../components/AssetList";
@@ -13,11 +14,17 @@ import UserXPSystem from "../components/UserXPSystem";
 import MarketPredictions from "../components/MarketPredictions";
 import HODLSentiment from "../components/HODLSentiment";
 import { useTheme } from "../contexts/ThemeContext";
+import { useThemeCustomization } from "../contexts/ThemeCustomizationContext";
+import ThemeCustomizer from "../components/ThemeCustomizer";
+import CryptoBattleArena from "../components/CryptoBattleArena";
+import WhaleWatch from "../components/WhaleWatch";
+import VoiceAlertSettings from "../components/VoiceAlertSettings";
 
 const Index = () => {
   const [showWatchlist, setShowWatchlist] = useState(false);
   const { watchlist } = useWatchlist();
   const { isDark } = useTheme();
+  const { themeClass } = useThemeCustomization();
   
   const { data: watchlistData, isLoading: watchlistLoading } = useRealTimeData(
     ['watchlist', ...watchlist], 
@@ -35,7 +42,7 @@ const Index = () => {
   );
   
   return (
-    <div className={`min-h-screen ${isDark ? 'dark bg-gradient-to-br from-gray-900 to-gray-950' : 'bg-gradient-to-br from-gray-50 to-gray-100'}`}>
+    <div className={`min-h-screen ${themeClass} ${isDark ? 'dark bg-gradient-to-br from-gray-900 to-gray-950' : 'bg-gradient-to-br from-gray-50 to-gray-100'}`}>
       <Header />
       <main className="animate-slide-up px-4 md:px-6">
         <div className="pt-6 pb-4 text-center">
@@ -81,9 +88,15 @@ const Index = () => {
         
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
-            <CryptoWhisper />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <CryptoWhisper />
+              <CryptoBattleArena />
+            </div>
             
-            <PanicMeter />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <PanicMeter />
+              <WhaleWatch />
+            </div>
             
             {showWatchlist ? (
               <div className="mt-4">
@@ -117,6 +130,10 @@ const Index = () => {
           </div>
           
           <div className="space-y-6">
+            <ThemeCustomizer />
+            
+            <VoiceAlertSettings />
+            
             <HODLSentiment />
             
             <MarketPredictions />
