@@ -35,7 +35,7 @@ export interface AssetHistoryData {
   date: string;
 }
 
-// Add missing types needed by API.ts
+// API response types
 export interface AssetsResponse {
   data: AssetData[];
   timestamp: number;

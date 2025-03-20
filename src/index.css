@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -259,5 +258,18 @@
     .mobile-full-width {
       @apply w-full;
     }
+  }
+
+  /* Whale alert animation */
+  @keyframes whale-alert {
+    0%, 100% { transform: translateY(0); }
+    20% { transform: translateY(-4px); }
+    40% { transform: translateY(0); }
+    60% { transform: translateY(-2px); }
+    80% { transform: translateY(0); }
+  }
+  
+  .whale-alert {
+    animation: whale-alert 1s ease;
   }
 }

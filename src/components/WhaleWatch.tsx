@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { WhaleTrade } from '../types';
-import { Whale, TrendingUp, TrendingDown, ExternalLink, Clock } from 'lucide-react';
+import { Anchor, TrendingUp, TrendingDown, ExternalLink, Clock } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { formatDistance } from 'date-fns';
 
@@ -82,7 +82,7 @@ const WhaleWatch: React.FC = () => {
     <div className={`neo-brutalist-sm ${isDark ? 'dark:bg-gray-800' : 'bg-white'} p-4 rounded-xl ${isAnimating ? 'whale-alert' : ''}`}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center">
-          <Whale size={18} className="text-blue-500 mr-2" />
+          <Anchor size={18} className="text-blue-500 mr-2" />
           <h3 className="text-lg font-bold">Whale Watch</h3>
         </div>
         <div className="text-xs text-gray-500 dark:text-gray-400">

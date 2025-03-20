@@ -205,7 +205,8 @@ const CryptoWhisper = () => {
           />
         </div>
         
-        <style jsx>{`
+        <style>
+          {`
           @keyframes countdown {
             from { width: 100%; }
             to { width: 0%; }
@@ -215,7 +216,8 @@ const CryptoWhisper = () => {
             from { transform: translateX(-10px); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
           }
-        `}</style>
+          `}
+        </style>
       </div>
       
       <CryptoWhisperReactions 
