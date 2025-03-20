@@ -19,6 +19,9 @@ import ThemeCustomizer from "../components/ThemeCustomizer";
 import CryptoBattleArena from "../components/CryptoBattleArena";
 import WhaleWatch from "../components/WhaleWatch";
 import VoiceAlertSettings from "../components/VoiceAlertSettings";
+import MarketShiftDetector from "../components/MarketShiftDetector";
+import CryptoTimeMachine from "../components/CryptoTimeMachine";
+import HODLvsSellLeaderboard from "../components/HODLvsSellLeaderboard";
 
 const Index = () => {
   const [showWatchlist, setShowWatchlist] = useState(false);
@@ -94,8 +97,12 @@ const Index = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <PanicMeter />
               <WhaleWatch />
+              <MarketShiftDetector />
+            </div>
+            
+            <div className="grid grid-cols-1 gap-4 mb-6">
+              <CryptoTimeMachine />
             </div>
             
             {showWatchlist ? (
@@ -130,9 +137,11 @@ const Index = () => {
           </div>
           
           <div className="space-y-6">
-            <ThemeCustomizer />
-            
             <VoiceAlertSettings />
+            
+            <HODLvsSellLeaderboard />
+            
+            <ThemeCustomizer />
             
             <HODLSentiment />
             

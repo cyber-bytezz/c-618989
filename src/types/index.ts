@@ -119,3 +119,43 @@ export interface AlertSettings {
     price: number;
   }[];
 }
+
+// New types for Market Shift Detector
+export interface MarketShift {
+  assetId: string;
+  name: string;
+  symbol: string;
+  change: number;
+  timestamp: number;
+  timeframe: string;
+}
+
+// Types for Crypto Time Machine
+export interface HistoricalMarketEvent {
+  date: Date;
+  event: string;
+  impact: 'positive' | 'negative' | 'neutral';
+}
+
+export interface MarketScenario {
+  id: string;
+  name: string;
+  description: string;
+  volatility: number;
+  startDate?: Date;
+  endDate?: Date;
+}
+
+// Types for HODL vs. Sell Sentiment
+export interface AssetSentiment {
+  assetId: string;
+  hodlPercentage: number;
+  sellPercentage: number;
+  totalVotes: number;
+}
+
+export type SentimentVote = 'hodl' | 'sell';
+
+export interface UserSentimentVotes {
+  [assetId: string]: SentimentVote;
+}

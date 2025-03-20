@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { ReactionType, UserReactions, InsightReactions } from '../types';
+import { motion } from 'framer-motion';
 
 interface CryptoWhisperReactionsProps {
   onReaction: (reaction: ReactionType) => void;
@@ -35,7 +36,7 @@ const CryptoWhisperReactions: React.FC<CryptoWhisperReactionsProps> = ({
       <div className="text-xs text-gray-500 dark:text-gray-400">React:</div>
       <div className="flex space-x-2">
         {reactions.map(reaction => (
-          <button
+          <motion.button
             key={reaction.type}
             onClick={() => !userReacted?.[reaction.type] && onReaction(reaction.type)}
             className={`flex items-center space-x-1 px-2 py-1 rounded-lg text-xs transition-colors ${
@@ -44,10 +45,27 @@ const CryptoWhisperReactions: React.FC<CryptoWhisperReactionsProps> = ({
                 : 'hover:bg-gray-100 dark:hover:bg-gray-800'
             }`}
             disabled={!!userReacted?.[reaction.type]}
+            whileHover={{ scale: userReacted?.[reaction.type] ? 1 : 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
           >
-            <span>{reaction.emoji}</span>
-            <span className="font-medium">{reactionCounts?.[reaction.type] || 0}</span>
-          </button>
+            <motion.span
+              animate={userReacted?.[reaction.type] ? { 
+                scale: [1, 1.2, 1],
+                rotate: [0, 5, -5, 0],
+                transition: { repeat: 0, duration: 0.5 }
+              } : {}}
+            >{reaction.emoji}</motion.span>
+            <motion.span 
+              className="font-medium"
+              animate={userReacted?.[reaction.type] ? { 
+                scale: [1, 1.1, 1],
+                transition: { repeat: 0, duration: 0.5 }
+              } : {}}
+            >{reactionCounts?.[reaction.type] || 0}</motion.span>
+          </motion.button>
         ))}
       </div>
     </div>
