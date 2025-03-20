@@ -1,61 +1,84 @@
-// Fix the userReacted type error by ensuring it returns a number for the string index
-const reactions = {
+
+import React, { useState, useEffect } from 'react';
+import { ReactionType } from '../types';
+
+// Initialize reactions with the correct type mapping
+type ReactionCounts = {
+  [key in ReactionType]: number;
+};
+
+const defaultReactions: ReactionCounts = {
   fire: 0,
   rocket: 0,
   diamond: 0,
   nervous: 0
 };
 
-// Set the correct type for tracking user reactions
-export type ReactionType = 'fire' | 'rocket' | 'diamond' | 'nervous';
-
-// Initialize reactionCounts with the correct type mapping
-type ReactionCounts = {
-  [key in ReactionType]: number;
-};
-
-// Use the fixed types
-import React, { useState } from 'react';
-
 interface CryptoWhisperReactionsProps {
-  onReaction: (reaction: ReactionType) => void;
-  userReacted: { [key in ReactionType]?: boolean };
-  reactionCounts: ReactionCounts;
+  onReaction?: (reaction: ReactionType) => void;
+  userReacted?: { [key in ReactionType]?: boolean };
+  reactionCounts?: ReactionCounts;
+  insightId?: string;
 }
 
-const CryptoWhisperReactions: React.FC<CryptoWhisperReactionsProps> = ({ onReaction, userReacted, reactionCounts }) => {
+const CryptoWhisperReactions: React.FC<CryptoWhisperReactionsProps> = ({ 
+  onReaction, 
+  userReacted = {}, 
+  reactionCounts = defaultReactions,
+  insightId 
+}) => {
   const [activeReaction, setActiveReaction] = useState<ReactionType | null>(null);
+  const [localCounts, setLocalCounts] = useState<ReactionCounts>(reactionCounts);
+
+  // Update local counts when prop changes
+  useEffect(() => {
+    if (reactionCounts) {
+      setLocalCounts(reactionCounts);
+    }
+  }, [reactionCounts]);
 
   const handleReaction = (reaction: ReactionType) => {
     setActiveReaction(reaction);
-    onReaction(reaction);
+    if (onReaction) {
+      onReaction(reaction);
+    } else {
+      // When no onReaction handler is provided, update local counts
+      setLocalCounts(prev => ({
+        ...prev,
+        [reaction]: prev[reaction] + 1
+      }));
+    }
   };
 
   return (
-    <div className="flex justify-around items-center p-2">
+    <div className="flex justify-around items-center p-2 mt-2">
       <button
         onClick={() => handleReaction('fire')}
-        className={`reaction-button ${userReacted?.fire ? 'active' : ''}`}
+        className={`reaction-button p-1.5 rounded-full transition-all ${userReacted?.fire ? 'bg-red-100 dark:bg-red-900/30' : 'hover:bg-gray-100 dark:hover:bg-gray-800/30'}`}
+        aria-label="Fire reaction"
       >
-        🔥 {reactionCounts.fire}
+        <span className="text-lg">🔥</span> <span className="text-sm font-medium">{localCounts.fire}</span>
       </button>
       <button
         onClick={() => handleReaction('rocket')}
-        className={`reaction-button ${userReacted?.rocket ? 'active' : ''}`}
+        className={`reaction-button p-1.5 rounded-full transition-all ${userReacted?.rocket ? 'bg-blue-100 dark:bg-blue-900/30' : 'hover:bg-gray-100 dark:hover:bg-gray-800/30'}`}
+        aria-label="Rocket reaction"
       >
-        🚀 {reactionCounts.rocket}
+        <span className="text-lg">🚀</span> <span className="text-sm font-medium">{localCounts.rocket}</span>
       </button>
       <button
         onClick={() => handleReaction('diamond')}
-        className={`reaction-button ${userReacted?.diamond ? 'active' : ''}`}
+        className={`reaction-button p-1.5 rounded-full transition-all ${userReacted?.diamond ? 'bg-purple-100 dark:bg-purple-900/30' : 'hover:bg-gray-100 dark:hover:bg-gray-800/30'}`}
+        aria-label="Diamond reaction"
       >
-        💎 {reactionCounts.diamond}
+        <span className="text-lg">💎</span> <span className="text-sm font-medium">{localCounts.diamond}</span>
       </button>
       <button
         onClick={() => handleReaction('nervous')}
-        className={`reaction-button ${userReacted?.nervous ? 'active' : ''}`}
+        className={`reaction-button p-1.5 rounded-full transition-all ${userReacted?.nervous ? 'bg-yellow-100 dark:bg-yellow-900/30' : 'hover:bg-gray-100 dark:hover:bg-gray-800/30'}`}
+        aria-label="Nervous reaction"
       >
-        😨 {reactionCounts.nervous}
+        <span className="text-lg">😨</span> <span className="text-sm font-medium">{localCounts.nervous}</span>
       </button>
     </div>
   );

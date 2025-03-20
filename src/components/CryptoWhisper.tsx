@@ -5,6 +5,7 @@ import { useRealTimeData } from '../hooks/useRealTimeData';
 import { fetchAssets } from '../lib/api';
 import { useTheme } from '../contexts/ThemeContext';
 import CryptoWhisperReactions from './CryptoWhisperReactions';
+import { ReactionType, UserReactions, InsightReactions } from '../types';
 
 // Hardcoded market insights based on price movements
 const marketInsights = [
@@ -100,6 +101,8 @@ const CryptoWhisper = () => {
   const [currentInsight, setCurrentInsight] = useState(0);
   const [allInsights, setAllInsights] = useState(marketInsights);
   const { isDark } = useTheme();
+  const [reactions, setReactions] = useState<InsightReactions>({});
+  const [userReacted, setUserReacted] = useState<UserReactions>({});
   
   // Fetch real-time data for dynamic insights
   const { data: assetsData } = useRealTimeData(
@@ -126,27 +129,69 @@ const CryptoWhisper = () => {
     
     return () => clearInterval(interval);
   }, [allInsights.length]);
+
+  // Initialize reactions for each insight
+  useEffect(() => {
+    const initialReactions: InsightReactions = {};
+    allInsights.forEach(insight => {
+      const insightId = insight.id.toString();
+      if (!reactions[insightId]) {
+        initialReactions[insightId] = {
+          fire: 0,
+          rocket: 0,
+          diamond: 0,
+          nervous: 0
+        };
+      }
+    });
+    
+    setReactions(prev => ({...prev, ...initialReactions}));
+  }, [allInsights]);
+  
+  const handleReaction = (reaction: ReactionType) => {
+    const insightId = allInsights[currentInsight].id.toString();
+    
+    // Update user reactions
+    setUserReacted(prev => ({
+      ...prev,
+      [insightId]: {
+        ...prev[insightId],
+        [reaction]: true
+      }
+    }));
+    
+    // Update reaction counts
+    setReactions(prev => ({
+      ...prev,
+      [insightId]: {
+        ...prev[insightId],
+        [reaction]: (prev[insightId]?.[reaction] || 0) + 1
+      }
+    }));
+  };
   
   const insight = allInsights[currentInsight];
   
   if (!insight) return null;
   
+  const insightId = insight.id.toString();
+  
   return (
-    <div className={`neo-brutalist-sm ${isDark ? 'dark:bg-gray-800 dark:text-white' : 'bg-white'} p-4 rounded-xl overflow-hidden`}>
+    <div className={`neo-brutalist-sm ${isDark ? 'dark:bg-gray-800/80 dark:text-white' : 'bg-white/90'} p-4 rounded-xl overflow-hidden backdrop-blur-sm`}>
       <div className="flex items-center mb-2">
         <Zap size={20} className="text-neo-accent mr-2" />
         <h3 className="text-lg font-bold">Crypto Whisper</h3>
       </div>
       
       <div className="relative overflow-hidden">
-        <div className="border-l-4 pl-4 py-2 mb-4 animate-slide-in" 
+        <div className="border-l-4 pl-4 py-2 mb-3 animate-slide-in" 
              style={{ borderColor: insight.type === 'positive' ? '#34c759' : 
                                      insight.type === 'negative' ? '#ff3b30' : '#ff9500' }}>
           <div className="flex items-start">
             <div className="mr-3 mt-1">
               {insight.icon}
             </div>
-            <p className="text-sm">{insight.message}</p>
+            <p className="text-sm md:text-base">{insight.message}</p>
           </div>
         </div>
         
@@ -160,17 +205,24 @@ const CryptoWhisper = () => {
           />
         </div>
         
-        <style>
-          {`
-            @keyframes countdown {
-              from { width: 100%; }
-              to { width: 0%; }
-            }
-          `}
-        </style>
+        <style jsx>{`
+          @keyframes countdown {
+            from { width: 100%; }
+            to { width: 0%; }
+          }
+          
+          @keyframes slide-in {
+            from { transform: translateX(-10px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+          }
+        `}</style>
       </div>
       
-      <CryptoWhisperReactions insightId={insight.id.toString()} />
+      <CryptoWhisperReactions 
+        onReaction={handleReaction}
+        userReacted={userReacted[insightId]}
+        reactionCounts={reactions[insightId]}
+      />
     </div>
   );
 };
