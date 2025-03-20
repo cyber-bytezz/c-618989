@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { Volume2, VolumeX, AlertCircle, Settings, Plus, X, History, User, VolumeDown, Volume1 } from 'lucide-react';
+import { Volume2, VolumeX, AlertCircle, Settings, Plus, X, History, User, Volume1, VolumeIcon } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { AlertSettings } from '../types';
 import {
@@ -47,7 +46,6 @@ const VoiceAlertSettings: React.FC = () => {
     { message: "Custom alert: Bitcoin above $60,000", timestamp: Date.now() - 14400000, type: 'custom', assetId: 'bitcoin' },
   ]);
   
-  // Load settings from localStorage
   useEffect(() => {
     const savedSettings = localStorage.getItem('alertSettings');
     if (savedSettings) {
@@ -70,7 +68,6 @@ const VoiceAlertSettings: React.FC = () => {
     }
   }, []);
   
-  // Save settings to localStorage
   useEffect(() => {
     localStorage.setItem('alertSettings', JSON.stringify(settings));
     localStorage.setItem('alertVolume', alertVolume.toString());
@@ -78,14 +75,12 @@ const VoiceAlertSettings: React.FC = () => {
     localStorage.setItem('alertHistory', JSON.stringify(alertHistory));
   }, [settings, alertVolume, voiceStyle, alertHistory]);
   
-  // Play test voice
   const playTestVoice = () => {
     if (!settings.voiceEnabled) return;
     
     const msg = new SpeechSynthesisUtterance("This is a test alert for Crypto Tracker");
     msg.volume = alertVolume / 100;
     
-    // Set voice based on selection
     const voices = window.speechSynthesis.getVoices();
     let selectedVoice;
     
@@ -94,7 +89,6 @@ const VoiceAlertSettings: React.FC = () => {
     } else if (voiceStyle === 'male') {
       selectedVoice = voices.find(voice => voice.name.includes('Male') || voice.name.includes('Google US English Male'));
     } else if (voiceStyle === 'robotic') {
-      // For robotic, we'll use a default voice but modify pitch and rate
       msg.pitch = 0.5;
       msg.rate = 0.8;
     }
@@ -105,7 +99,6 @@ const VoiceAlertSettings: React.FC = () => {
     
     window.speechSynthesis.speak(msg);
     
-    // Add to history
     const newAlert: VoiceAlert = {
       message: "Test alert message",
       timestamp: Date.now(),
@@ -126,7 +119,6 @@ const VoiceAlertSettings: React.FC = () => {
     setSettings(prev => ({ ...prev, voiceEnabled: !prev.voiceEnabled }));
     toast.success(settings.voiceEnabled ? "Voice alerts disabled" : "Voice alerts enabled");
     
-    // If enabling voice alerts, play a test alert
     if (!settings.voiceEnabled) {
       playTestVoice();
     }
@@ -287,7 +279,7 @@ const VoiceAlertSettings: React.FC = () => {
                       <span className="text-xs text-gray-500 dark:text-gray-400">{alertVolume}%</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <VolumeDown size={14} className="text-gray-500 dark:text-gray-400" />
+                      <VolumeIcon size={14} className="text-gray-500 dark:text-gray-400" />
                       <Slider
                         value={[alertVolume]}
                         onValueChange={(values) => setAlertVolume(values[0])}
