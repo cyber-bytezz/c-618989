@@ -18,15 +18,35 @@ import UserXPSystem from "@/components/UserXPSystem";
 import VoiceAlertSettings from "@/components/VoiceAlertSettings";
 import WhaleWatch from "@/components/WhaleWatch";
 import CryptoFortuneTeller from '../components/CryptoFortuneTeller';
+import LiveMarketPulse from '@/components/LiveMarketPulse';
+import TradingSimulator from '@/components/TradingSimulator';
 import { useState, useEffect } from 'react';
 import { AssetData, TimeFrame } from '@/types';
 import { fetchAssets } from '@/lib/api';
+import { useThemeCustomization } from '@/contexts/ThemeCustomizationContext';
+import { Toaster } from "@/components/ui/sonner";
 
 const Index = () => {
   // State for required props
   const [marketSentiment, setMarketSentiment] = useState<'extreme_fear' | 'fear' | 'neutral' | 'positive' | 'greed' | 'extreme_greed'>('neutral');
   const [selectedAsset, setSelectedAsset] = useState<AssetData | null>(null);
   const [timeFrame, setTimeFrame] = useState<TimeFrame>('d1');
+  const { themeClass } = useThemeCustomization();
+
+  // Simulated market data fetch for the realistic sentiment analysis
+  useEffect(() => {
+    // Periodically update market sentiment based on simulated market conditions
+    const sentimentValues: ('extreme_fear' | 'fear' | 'neutral' | 'positive' | 'greed' | 'extreme_greed')[] = [
+      'fear', 'neutral', 'positive', 'greed', 'neutral', 'positive'
+    ];
+    
+    const interval = setInterval(() => {
+      const randomSentiment = sentimentValues[Math.floor(Math.random() * sentimentValues.length)];
+      setMarketSentiment(randomSentiment);
+    }, 15000); // Change sentiment every 15 seconds
+    
+    return () => clearInterval(interval);
+  }, []);
 
   // Fetch a default asset for components that need asset data
   useEffect(() => {
@@ -44,9 +64,20 @@ const Index = () => {
     fetchDefaultAsset();
   }, []);
 
+  // Handle asset selection from asset list
+  const handleAssetSelect = (asset: AssetData) => {
+    setSelectedAsset(asset);
+  };
+
+  // Handle timeframe change
+  const handleTimeFrameChange = (newTimeFrame: TimeFrame) => {
+    setTimeFrame(newTimeFrame);
+  };
+
   return (
-    <div className="min-h-screen">
+    <div className={`min-h-screen ${themeClass}`}>
       <Header />
+      <Toaster position="top-right" />
       <div className="container mx-auto px-4 py-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Main content - 2/3 width on medium screens and above */}
@@ -57,8 +88,11 @@ const Index = () => {
               <PanicMeter />
             </div>
             
+            {/* New Live Market Pulse component */}
+            <LiveMarketPulse />
+            
             {/* Asset list */}
-            <AssetList />
+            <AssetList onAssetSelect={handleAssetSelect} />
             
             {/* Middle section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -68,6 +102,9 @@ const Index = () => {
             
             {/* New Fortune Teller component */}
             <CryptoFortuneTeller />
+            
+            {/* New Trading Simulator component */}
+            {selectedAsset && <TradingSimulator asset={selectedAsset} />}
             
             {/* Battle Arena and Whale Watch section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -86,7 +123,8 @@ const Index = () => {
               {selectedAsset && (
                 <PerformanceComparison 
                   assetId={selectedAsset.id} 
-                  timeFrame={timeFrame} 
+                  timeFrame={timeFrame}
+                  onTimeFrameChange={handleTimeFrameChange}
                 />
               )}
               <MarketShiftDetector />

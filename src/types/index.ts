@@ -1,4 +1,3 @@
-
 export interface AssetData {
   id: string;
   rank: string;
@@ -178,4 +177,37 @@ export interface CryptoPrediction {
   isCorrect?: boolean;
   actualPercentChange?: number;
   userHasLiked: boolean;
+}
+
+// Add new types for the Live Market Pulse
+export interface MarketPulseData {
+  timestamp: number;
+  volume: number;
+  transactions: number;
+  dominance: {
+    [assetId: string]: number;
+  };
+  sentiment: MarketSentiment;
+}
+
+// Add types for Trading Simulator
+export interface TradeSimulation {
+  assetId: string;
+  initialInvestment: number;
+  entryPrice: number;
+  entryTimestamp: number;
+  currentPrice: number;
+  currentTimestamp: number;
+  profitLoss: number;
+  profitLossPercentage: number;
+  leverageUsed: number;
+  isLong: boolean;
+}
+
+export interface TradingSimulatorSettings {
+  startingBalance: number;
+  enableLeverage: boolean;
+  maxLeverage: number;
+  fees: number; // Percentage
+  simulationSpeed: 'normal' | 'fast' | 'instant';
 }
