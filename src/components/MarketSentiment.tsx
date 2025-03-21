@@ -117,7 +117,7 @@ const MarketSentiment = ({ sentiment = "neutral", className = "" }: MarketSentim
   }, [sentiment]);
 
   // Provide a fallback if the sentiment is not in the config
-  const sentimentKey = (config[sentiment]) ? sentiment : "neutral";
+  const sentimentKey = Object.keys(config).includes(sentiment) ? sentiment : "neutral";
   const { icon: Icon, label, color, bg, description, value } = config[sentimentKey];
   
   return (

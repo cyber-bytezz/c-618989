@@ -21,6 +21,7 @@ import CryptoFortuneTeller from '../components/CryptoFortuneTeller';
 import LiveMarketPulse from '@/components/LiveMarketPulse';
 import TradingSimulator from '@/components/TradingSimulator';
 import AIAdvisor from '@/components/AIAdvisor';
+import CryptoCollaborationZone from '@/components/CryptoCollaborationZone';
 import { useState, useEffect } from 'react';
 import { AssetData, TimeFrame } from '@/types';
 import { fetchAssets } from '@/lib/api';
@@ -96,6 +97,9 @@ const Index = () => {
             
             {/* New Live Market Pulse component */}
             <LiveMarketPulse />
+            
+            {/* New Crypto Collaboration Zone component */}
+            <CryptoCollaborationZone />
             
             {/* Asset list with proper prop */}
             <div>

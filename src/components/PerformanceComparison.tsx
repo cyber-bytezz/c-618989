@@ -1,198 +1,161 @@
+
 import { useState, useEffect } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { fetchAssetHistory } from '../lib/api';
-import { TimeFrame, TimeFrameOption } from '../types';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card } from '@/components/ui/card';
+import PriceChart from './PriceChart';
+import { fetchAssetHistory, formatPrice } from '@/lib/api';
 import { useTheme } from '../contexts/ThemeContext';
-import { formatPrice } from '../lib/api';
+import { TimeFrame, TimeFrameOption, AssetHistoryData } from '@/types';
+import { BarChart, TrendingUp, TrendingDown, Timer } from 'lucide-react';
 import LoadingSkeleton from './LoadingSkeleton';
 
 interface PerformanceComparisonProps {
   assetId: string;
   timeFrame: TimeFrame;
-  onTimeFrameChange?: (newTimeFrame: TimeFrame) => void;
+  onTimeFrameChange: (timeFrame: TimeFrame) => void;
 }
 
-type Period = 'current' | 'previous';
-
-const PerformanceComparison = ({ assetId, timeFrame, onTimeFrameChange }: PerformanceComparisonProps) => {
-  const [currentPeriodData, setCurrentPeriodData] = useState<AssetHistoryData[]>([]);
-  const [previousPeriodData, setPreviousPeriodData] = useState<AssetHistoryData[]>([]);
+const PerformanceComparison = ({ 
+  assetId, 
+  timeFrame = 'd1',
+  onTimeFrameChange
+}: PerformanceComparisonProps) => {
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [priceData, setPriceData] = useState<AssetHistoryData[]>([]);
+  const [comparisonData, setComparisonData] = useState<AssetHistoryData[]>([]);
+  const [comparisonAsset, setComparisonAsset] = useState('ethereum');
+  const { isDark } = useTheme();
   
+  // Time frame options
+  const timeFrameOptions: TimeFrameOption[] = [
+    { value: 'h1', label: '1H' },
+    { value: 'h12', label: '12H' },
+    { value: 'd1', label: '1D' },
+    { value: 'w1', label: '1W' },
+    { value: 'm1', label: '1M' },
+  ];
+  
+  // Fetch price data for both assets
   useEffect(() => {
     const fetchData = async () => {
+      if (!assetId) return;
+      
       setIsLoading(true);
-      setError(null);
       
       try {
-        // Fetch current period data
-        const currentPeriodResponse = await fetchAssetHistory(assetId, timeFrame);
-        setCurrentPeriodData(currentPeriodResponse.data);
+        // Fetch main asset data
+        const mainData = await fetchAssetHistory(assetId, timeFrame);
+        setPriceData(mainData.data);
         
-        // Calculate the previous period based on the current timeFrame
-        let previousTimeFrame = timeFrame;
-        let historyPeriod = '';
-        const now = Date.now();
-        
-        if (timeFrame === 'h1') {
-          historyPeriod = `&start=${now - 2 * 60 * 60 * 1000}&end=${now - 60 * 60 * 1000}`;
-        } else if (timeFrame === 'h12') {
-          historyPeriod = `&start=${now - 24 * 60 * 60 * 1000}&end=${now - 12 * 60 * 60 * 1000}`;
-        } else if (timeFrame === 'd1') {
-          historyPeriod = `&start=${now - 2 * 24 * 60 * 60 * 1000}&end=${now - 24 * 60 * 60 * 1000}`;
-        } else if (timeFrame === 'w1') {
-          historyPeriod = `&start=${now - 14 * 24 * 60 * 60 * 1000}&end=${now - 7 * 24 * 60 * 60 * 1000}`;
-        } else if (timeFrame === 'm1') {
-          historyPeriod = `&start=${now - 60 * 24 * 60 * 60 * 1000}&end=${now - 30 * 24 * 60 * 60 * 1000}`;
-        }
-        
-        // Custom fetch for previous period
-        const response = await fetch(`https://api.coincap.io/v2/assets/${assetId}/history?interval=${previousTimeFrame}${historyPeriod}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch previous period data');
-        }
-        
-        const data = await response.json();
-        setPreviousPeriodData(data.data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch data');
-        console.error('Failed to fetch performance comparison data:', err);
+        // Fetch comparison asset data
+        const compareData = await fetchAssetHistory(comparisonAsset, timeFrame);
+        setComparisonData(compareData.data);
+      } catch (error) {
+        console.error("Error fetching asset history:", error);
       } finally {
         setIsLoading(false);
       }
     };
     
     fetchData();
-  }, [assetId, timeFrame]);
+  }, [assetId, comparisonAsset, timeFrame]);
   
-  if (isLoading) {
-    return <LoadingSkeleton variant="chart" />;
-  }
-  
-  if (error) {
-    return (
-      <div className="neo-brutalist-sm bg-red-100 p-4 rounded-xl">
-        <p className="text-red-600">Error loading comparison data: {error}</p>
-      </div>
-    );
-  }
-  
-  // Prepare chart data
-  const combinedData = currentPeriodData.map((item, index) => {
-    const previousPeriodPoint = previousPeriodData[index] || { priceUsd: '0', time: item.time - (24 * 60 * 60 * 1000) };
+  // Calculate performance metrics
+  const calculatePerformance = (data: AssetHistoryData[]) => {
+    if (!data.length) return { change: 0, percentChange: 0 };
     
-    return {
-      date: new Date(item.time).toLocaleDateString(),
-      current: parseFloat(item.priceUsd),
-      previous: parseFloat(previousPeriodPoint.priceUsd),
-      timestamp: item.time,
-    };
-  });
-  
-  // Calculate performance change
-  const calculatePerformanceChange = (periodData: AssetHistoryData[], period: Period) => {
-    if (!periodData.length) return { change: 0, percentChange: 0 };
+    const firstPrice = parseFloat(data[0].priceUsd);
+    const lastPrice = parseFloat(data[data.length - 1].priceUsd);
     
-    const firstPrice = parseFloat(periodData[0].priceUsd);
-    const lastPrice = parseFloat(periodData[periodData.length - 1].priceUsd);
     const change = lastPrice - firstPrice;
-    const percentChange = ((lastPrice - firstPrice) / firstPrice) * 100;
+    const percentChange = (change / firstPrice) * 100;
     
     return { change, percentChange };
   };
   
-  const currentPerformance = calculatePerformanceChange(currentPeriodData, 'current');
-  const previousPerformance = calculatePerformanceChange(previousPeriodData, 'previous');
+  const mainPerformance = calculatePerformance(priceData);
+  const comparisonPerformance = calculatePerformance(comparisonData);
   
-  // Performance improved or worsened compared to previous period
-  const performanceComparison = currentPerformance.percentChange - previousPerformance.percentChange;
-  const isImproved = performanceComparison >= 0;
-  
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="neo-brutalist-sm bg-white p-3 rounded-lg dark:bg-gray-800 dark:text-white">
-          <p className="text-sm font-medium">{new Date(payload[0].payload.timestamp).toLocaleString()}</p>
-          <p className="text-sm font-mono font-semibold">Current: {formatPrice(payload[0].value)}</p>
-          {payload[1] && <p className="text-sm font-mono font-semibold">Previous: {formatPrice(payload[1].value)}</p>}
-        </div>
-      );
-    }
-    return null;
+  // Handle time frame change
+  const handleTimeFrameChange = (value: string) => {
+    onTimeFrameChange(value as TimeFrame);
   };
   
-  const getPeriodLabel = () => {
-    switch (timeFrame) {
-      case 'h1': return 'hour';
-      case 'h12': return '12 hours';
-      case 'd1': return 'day';
-      case 'w1': return 'week';
-      case 'm1': return 'month';
-      default: return 'period';
-    }
+  // Format the price change with the correct sign
+  const formatChange = (change: number) => {
+    const sign = change >= 0 ? '+' : '';
+    return `${sign}${change.toFixed(2)}%`;
   };
   
   return (
-    <div className="neo-brutalist-sm bg-white p-4 rounded-xl dark:bg-gray-800 dark:text-white">
-      <h3 className="text-lg font-semibold mb-2">Performance Comparison</h3>
-      <div className="flex items-center justify-between mb-3">
-        <div>
-          <p className="text-sm">Current {getPeriodLabel()}: 
-            <span className={`font-semibold ml-1 ${currentPerformance.percentChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {currentPerformance.percentChange.toFixed(2)}%
-            </span>
-          </p>
-          <p className="text-sm">Previous {getPeriodLabel()}: 
-            <span className={`font-semibold ml-1 ${previousPerformance.percentChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {previousPerformance.percentChange.toFixed(2)}%
-            </span>
-          </p>
+    <div className={`neo-brutalist-sm rounded-xl p-4 ${isDark ? 'bg-gray-800 text-white' : 'bg-white'}`}>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <BarChart size={20} className="text-purple-500" />
+          <h3 className="font-bold">Performance Comparison</h3>
         </div>
-        <div className={`text-sm font-semibold ${isImproved ? 'text-green-600' : 'text-red-600'}`}>
-          {isImproved ? 'Improved' : 'Declined'} by {Math.abs(performanceComparison).toFixed(2)}%
-        </div>
+        
+        <Tabs defaultValue={timeFrame} onValueChange={handleTimeFrameChange}>
+          <TabsList>
+            {timeFrameOptions.map(option => (
+              <TabsTrigger key={option.value} value={option.value}>
+                {option.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
       </div>
       
-      <div className="h-64">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={combinedData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
-            <XAxis 
-              dataKey="date" 
-              axisLine={false} 
-              tickLine={false} 
-              tick={{ fontSize: 12 }}
-              minTickGap={30}
-            />
-            <YAxis 
-              domain={['auto', 'auto']} 
-              axisLine={false} 
-              tickLine={false} 
-              tick={{ fontSize: 12 }}
-              width={60}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend />
-            <Line 
-              type="monotone" 
-              dataKey="current" 
-              name="Current Period" 
-              stroke="#0071e3" 
-              strokeWidth={2}
-              dot={false}
-            />
-            <Line 
-              type="monotone" 
-              dataKey="previous" 
-              name="Previous Period" 
-              stroke="#8e8e93" 
-              strokeWidth={2}
-              dot={false}
-              strokeDasharray="5 5"
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
+      {isLoading ? (
+        <LoadingSkeleton height={300} />
+      ) : (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <Card className="p-3 bg-indigo-50 dark:bg-indigo-900/30">
+              <div className="text-sm text-gray-500 dark:text-gray-400">Main Asset</div>
+              <div className="text-lg font-semibold mt-1">{assetId.toUpperCase()}</div>
+              <div className={`flex items-center mt-2 ${
+                mainPerformance.percentChange >= 0 ? 'text-green-600' : 'text-red-600'
+              }`}>
+                {mainPerformance.percentChange >= 0 ? (
+                  <TrendingUp size={16} className="mr-1" />
+                ) : (
+                  <TrendingDown size={16} className="mr-1" />
+                )}
+                <span>{formatChange(mainPerformance.percentChange)}</span>
+              </div>
+            </Card>
+            
+            <Card className="p-3 bg-purple-50 dark:bg-purple-900/30">
+              <div className="text-sm text-gray-500 dark:text-gray-400">Comparison</div>
+              <div className="text-lg font-semibold mt-1">{comparisonAsset.toUpperCase()}</div>
+              <div className={`flex items-center mt-2 ${
+                comparisonPerformance.percentChange >= 0 ? 'text-green-600' : 'text-red-600'
+              }`}>
+                {comparisonPerformance.percentChange >= 0 ? (
+                  <TrendingUp size={16} className="mr-1" />
+                ) : (
+                  <TrendingDown size={16} className="mr-1" />
+                )}
+                <span>{formatChange(comparisonPerformance.percentChange)}</span>
+              </div>
+            </Card>
+          </div>
+          
+          {/* Price chart for comparison */}
+          <PriceChart 
+            prices={priceData.map(d => ({ value: parseFloat(d.priceUsd), time: d.time }))} 
+            comparisonPrices={comparisonData.map(d => ({ value: parseFloat(d.priceUsd), time: d.time }))}
+            showComparison={true}
+            height={220}
+          />
+          
+          <div className="text-xs flex items-center justify-center text-gray-500 dark:text-gray-400">
+            <Timer size={12} className="mr-1" />
+            <span>Last updated: {new Date().toLocaleTimeString()}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
