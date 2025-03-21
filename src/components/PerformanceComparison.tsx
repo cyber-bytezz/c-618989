@@ -1,19 +1,20 @@
-
 import { useState, useEffect } from 'react';
-import { AssetHistoryData, TimeFrame } from '../types';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { fetchAssetHistory } from '../lib/api';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { TimeFrame, TimeFrameOption } from '../types';
+import { useTheme } from '../contexts/ThemeContext';
 import { formatPrice } from '../lib/api';
 import LoadingSkeleton from './LoadingSkeleton';
 
 interface PerformanceComparisonProps {
   assetId: string;
   timeFrame: TimeFrame;
+  onTimeFrameChange?: (newTimeFrame: TimeFrame) => void;
 }
 
 type Period = 'current' | 'previous';
 
-const PerformanceComparison = ({ assetId, timeFrame }: PerformanceComparisonProps) => {
+const PerformanceComparison = ({ assetId, timeFrame, onTimeFrameChange }: PerformanceComparisonProps) => {
   const [currentPeriodData, setCurrentPeriodData] = useState<AssetHistoryData[]>([]);
   const [previousPeriodData, setPreviousPeriodData] = useState<AssetHistoryData[]>([]);
   const [isLoading, setIsLoading] = useState(true);

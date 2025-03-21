@@ -20,6 +20,7 @@ import WhaleWatch from "@/components/WhaleWatch";
 import CryptoFortuneTeller from '../components/CryptoFortuneTeller';
 import LiveMarketPulse from '@/components/LiveMarketPulse';
 import TradingSimulator from '@/components/TradingSimulator';
+import AIAdvisor from '@/components/AIAdvisor';
 import { useState, useEffect } from 'react';
 import { AssetData, TimeFrame } from '@/types';
 import { fetchAssets } from '@/lib/api';
@@ -88,11 +89,19 @@ const Index = () => {
               <PanicMeter />
             </div>
             
+            {/* New AI Advisor component */}
+            {selectedAsset && (
+              <AIAdvisor asset={selectedAsset} />
+            )}
+            
             {/* New Live Market Pulse component */}
             <LiveMarketPulse />
             
-            {/* Asset list */}
-            <AssetList onAssetSelect={handleAssetSelect} />
+            {/* Asset list with proper prop */}
+            <div>
+              {/* We need to pass the onAssetSelect prop */}
+              <AssetList onAssetSelect={handleAssetSelect} />
+            </div>
             
             {/* Middle section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

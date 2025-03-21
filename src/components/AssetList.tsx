@@ -19,6 +19,10 @@ import RefreshTimer from './RefreshTimer';
 import MostWatchedAssets from './MostWatchedAssets';
 import { useTheme } from '../contexts/ThemeContext';
 
+interface AssetListProps {
+  onAssetSelect?: (asset: AssetData) => void;
+}
+
 const sortOptions: SortOption[] = [
   {
     id: 'rank',
@@ -59,7 +63,7 @@ const categoryOptions = [
   { id: 'trending', label: 'Trending', icon: BarChart4 }
 ];
 
-const AssetList = () => {
+const AssetList = ({ onAssetSelect }: AssetListProps) => {
   const [sortBy, setSortBy] = useState('rank');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [searchTerm, setSearchTerm] = useState('');
@@ -122,6 +126,13 @@ const AssetList = () => {
   });
 
   const marketSentiment = data ? calculateMarketSentiment(data) : 'neutral';
+
+  const handleAssetSelect = (asset: AssetData) => {
+    if (onAssetSelect) {
+      onAssetSelect(asset);
+      toast.success(`Selected ${asset.name} for analysis`);
+    }
+  };
 
   return (
     <div className={`max-w-4xl mx-auto py-8 px-4 ${isDark ? 'dark text-white' : ''}`}>
@@ -213,7 +224,9 @@ const AssetList = () => {
           ) : (
             <div className="grid grid-cols-1 gap-4 animate-fade-in">
               {sortedAssets.map(asset => (
-                <AssetCard key={asset.id} asset={asset} />
+                <div key={asset.id} onClick={() => handleAssetSelect(asset)} className="cursor-pointer">
+                  <AssetCard key={asset.id} asset={asset} />
+                </div>
               ))}
             </div>
           )}
@@ -303,3 +316,4 @@ const CategoryButton = ({ icon: Icon, label, active, onClick }: CategoryButtonPr
 };
 
 export default AssetList;
+

@@ -16,11 +16,22 @@ interface MarketSentimentProps {
   className?: string;
 }
 
+type SentimentConfig = {
+  [key in SentimentType]: {
+    icon: React.ElementType;
+    label: string;
+    color: string;
+    bg: string;
+    description: string;
+    value: number;
+  };
+};
+
 const MarketSentiment = ({ sentiment = "neutral", className = "" }: MarketSentimentProps) => {
   const { isDark } = useTheme();
   const [animateValue, setAnimateValue] = useState(0);
   
-  const config = {
+  const config: SentimentConfig = {
     extreme_fear: {
       icon: Snowflake,
       label: "Extreme Fear",
@@ -72,6 +83,12 @@ const MarketSentiment = ({ sentiment = "neutral", className = "" }: MarketSentim
   };
 
   useEffect(() => {
+    // Ensure the sentiment is a valid key in our config
+    if (!config[sentiment]) {
+      console.error(`Invalid sentiment value: ${sentiment}`);
+      return;
+    }
+    
     const currentConfig = config[sentiment];
     if (currentConfig) {
       const targetValue = currentConfig.value;
@@ -99,12 +116,9 @@ const MarketSentiment = ({ sentiment = "neutral", className = "" }: MarketSentim
     }
   }, [sentiment]);
 
-  const currentConfig = config[sentiment];
-  if (!currentConfig) {
-    return null; // Fallback if sentiment is not valid
-  }
-
-  const { icon: Icon, label, color, bg, description, value } = currentConfig;
+  // Provide a fallback if the sentiment is not in the config
+  const sentimentKey = (config[sentiment]) ? sentiment : "neutral";
+  const { icon: Icon, label, color, bg, description, value } = config[sentimentKey];
   
   return (
     <div className={`neo-brutalist-sm p-4 rounded-xl ${bg} ${className} transition-all duration-300`}>
@@ -120,7 +134,7 @@ const MarketSentiment = ({ sentiment = "neutral", className = "" }: MarketSentim
       <div className="mt-2">
         <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-1">
           <div 
-            className={`h-2.5 rounded-full ${sentiment.includes('fear') ? 'bg-red-500' : sentiment === 'neutral' ? 'bg-yellow-400' : 'bg-green-500'}`}
+            className={`h-2.5 rounded-full ${sentimentKey.includes('fear') ? 'bg-red-500' : sentimentKey === 'neutral' ? 'bg-yellow-400' : 'bg-green-500'}`}
             style={{ width: `${animateValue}%`, transition: 'width 1s ease-in-out' }}
           ></div>
         </div>

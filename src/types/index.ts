@@ -1,3 +1,4 @@
+
 export interface AssetData {
   id: string;
   rank: string;
@@ -210,4 +211,29 @@ export interface TradingSimulatorSettings {
   maxLeverage: number;
   fees: number; // Percentage
   simulationSpeed: 'normal' | 'fast' | 'instant';
+}
+
+// New types for AI Advisor feature
+export type TradeAction = 'buy' | 'sell' | 'hold' | 'watch';
+
+export type RiskTolerance = 'conservative' | 'moderate' | 'aggressive';
+
+export interface TradeSuggestion {
+  assetId: string;
+  action: TradeAction;
+  confidence: number; // 0-100%
+  reasoning: string;
+  suggestedAt: number;
+  expiresAt: number;
+  potentialGain: number; // Expected percentage gain
+  potentialLoss: number; // Potential percentage loss
+}
+
+export interface AIAdvisorSettings {
+  riskTolerance: RiskTolerance;
+  notificationsEnabled: boolean;
+  preferredTimeFrame: TimeFrame;
+  prioritizeVolume: boolean;
+  considerMarketSentiment: boolean;
+  trackPerformance: boolean;
 }
