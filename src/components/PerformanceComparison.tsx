@@ -15,6 +15,12 @@ interface PerformanceComparisonProps {
   onTimeFrameChange: (timeFrame: TimeFrame) => void;
 }
 
+// Define a type for the price data we'll use in the chart
+interface PriceDataPoint {
+  value: number;
+  time: number;
+}
+
 const PerformanceComparison = ({ 
   assetId, 
   timeFrame = 'd1',
@@ -86,6 +92,14 @@ const PerformanceComparison = ({
     const sign = change >= 0 ? '+' : '';
     return `${sign}${change.toFixed(2)}%`;
   };
+
+  // Convert price data to the format expected by the chart component
+  const formatChartData = (data: AssetHistoryData[]): PriceDataPoint[] => {
+    return data.map(d => ({
+      value: parseFloat(d.priceUsd),
+      time: d.time
+    }));
+  };
   
   return (
     <div className={`neo-brutalist-sm rounded-xl p-4 ${isDark ? 'bg-gray-800 text-white' : 'bg-white'}`}>
@@ -107,7 +121,7 @@ const PerformanceComparison = ({
       </div>
       
       {isLoading ? (
-        <LoadingSkeleton height={300} />
+        <LoadingSkeleton className="h-[300px]" />
       ) : (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -144,8 +158,8 @@ const PerformanceComparison = ({
           
           {/* Price chart for comparison */}
           <PriceChart 
-            prices={priceData.map(d => ({ value: parseFloat(d.priceUsd), time: d.time }))} 
-            comparisonPrices={comparisonData.map(d => ({ value: parseFloat(d.priceUsd), time: d.time }))}
+            mainPrices={formatChartData(priceData)} 
+            comparisonPrices={formatChartData(comparisonData)}
             showComparison={true}
             height={220}
           />

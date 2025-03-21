@@ -1,4 +1,3 @@
-
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { 
@@ -48,7 +47,6 @@ const AssetDetails = () => {
   const changePercent = asset ? parseFloat(asset.changePercent24Hr) : 0;
   const isPositive = changePercent > 0;
   
-  // Calculate volatility if history data is available
   const volatility = history && history.length > 0 ? calculateVolatility(history) : null;
   
   const toggleWatchlist = () => {
@@ -225,7 +223,11 @@ const AssetDetails = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <PerformanceComparison assetId={id!} timeFrame={timeFrame} />
+              <PerformanceComparison 
+                assetId={id!} 
+                timeFrame={timeFrame}
+                onTimeFrameChange={setTimeFrame}
+              />
               
               <AssetComment assetId={id!} />
             </div>

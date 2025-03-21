@@ -84,37 +84,35 @@ const MarketSentiment = ({ sentiment = "neutral", className = "" }: MarketSentim
 
   useEffect(() => {
     // Ensure the sentiment is a valid key in our config
-    if (!config[sentiment]) {
-      console.error(`Invalid sentiment value: ${sentiment}`);
-      return;
-    }
+    const validSentiment = Object.keys(config).includes(sentiment) 
+      ? sentiment 
+      : 'neutral';
     
-    const currentConfig = config[sentiment];
-    if (currentConfig) {
-      const targetValue = currentConfig.value;
-      let start = 0;
-      const animateDuration = 1500;
-      const increment = 1000 / 60; // 60fps
-      const steps = animateDuration / increment;
-      const incrementValue = targetValue / steps;
-      
-      let timer: number;
-      const animate = () => {
-        if (start < targetValue) {
-          const next = Math.min(start + incrementValue, targetValue);
-          setAnimateValue(next);
-          start = next;
-          timer = window.setTimeout(animate, increment);
-        } else {
-          setAnimateValue(targetValue);
-        }
-      };
-      
-      animate();
-      
-      return () => clearTimeout(timer);
-    }
-  }, [sentiment]);
+    const currentConfig = config[validSentiment];
+    
+    const targetValue = currentConfig.value;
+    let start = 0;
+    const animateDuration = 1500;
+    const increment = 1000 / 60; // 60fps
+    const steps = animateDuration / increment;
+    const incrementValue = targetValue / steps;
+    
+    let timer: number;
+    const animate = () => {
+      if (start < targetValue) {
+        const next = Math.min(start + incrementValue, targetValue);
+        setAnimateValue(next);
+        start = next;
+        timer = window.setTimeout(animate, increment);
+      } else {
+        setAnimateValue(targetValue);
+      }
+    };
+    
+    animate();
+    
+    return () => clearTimeout(timer);
+  }, [sentiment, config]);
 
   // Provide a fallback if the sentiment is not in the config
   const sentimentKey = Object.keys(config).includes(sentiment) ? sentiment : "neutral";
