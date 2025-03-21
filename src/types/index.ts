@@ -159,3 +159,23 @@ export type SentimentVote = 'hodl' | 'sell';
 export interface UserSentimentVotes {
   [assetId: string]: SentimentVote;
 }
+
+// Types for Crypto Fortune Teller
+export interface CryptoPrediction {
+  id: string;
+  coinId: string;
+  coinName: string;
+  coinSymbol: string;
+  direction: 'rise' | 'fall';
+  percentChange: number;
+  timeFrame: string;
+  startPrice: number;
+  predictedAt: number;
+  deadline: number;
+  userName: string;
+  likes: number;
+  isResolved: boolean;
+  isCorrect?: boolean;
+  actualPercentChange?: number;
+  userHasLiked: boolean;
+}
