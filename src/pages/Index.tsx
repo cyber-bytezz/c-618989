@@ -1,3 +1,4 @@
+
 import AssetList from "@/components/AssetList";
 import CryptoBattleArena from "@/components/CryptoBattleArena";
 import CryptoTimeMachine from "@/components/CryptoTimeMachine";
@@ -17,8 +18,32 @@ import UserXPSystem from "@/components/UserXPSystem";
 import VoiceAlertSettings from "@/components/VoiceAlertSettings";
 import WhaleWatch from "@/components/WhaleWatch";
 import CryptoFortuneTeller from '../components/CryptoFortuneTeller';
+import { useState, useEffect } from 'react';
+import { AssetData, TimeFrame } from '@/types';
+import { fetchAssets } from '@/lib/api';
 
 const Index = () => {
+  // State for required props
+  const [marketSentiment, setMarketSentiment] = useState<'extreme_fear' | 'fear' | 'neutral' | 'positive' | 'greed' | 'extreme_greed'>('neutral');
+  const [selectedAsset, setSelectedAsset] = useState<AssetData | null>(null);
+  const [timeFrame, setTimeFrame] = useState<TimeFrame>('d1');
+
+  // Fetch a default asset for components that need asset data
+  useEffect(() => {
+    const fetchDefaultAsset = async () => {
+      try {
+        const response = await fetchAssets(1);
+        if (response.data && response.data.length > 0) {
+          setSelectedAsset(response.data[0]);
+        }
+      } catch (error) {
+        console.error("Failed to fetch default asset:", error);
+      }
+    };
+
+    fetchDefaultAsset();
+  }, []);
+
   return (
     <div className="min-h-screen">
       <Header />
@@ -28,7 +53,7 @@ const Index = () => {
           <div className="md:col-span-2 space-y-6">
             {/* Top section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <MarketSentiment />
+              <MarketSentiment sentiment={marketSentiment} />
               <PanicMeter />
             </div>
             
@@ -58,7 +83,12 @@ const Index = () => {
             
             {/* Comparison and Shift Detector section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <PerformanceComparison />
+              {selectedAsset && (
+                <PerformanceComparison 
+                  assetId={selectedAsset.id} 
+                  timeFrame={timeFrame} 
+                />
+              )}
               <MarketShiftDetector />
             </div>
           </div>
@@ -75,7 +105,9 @@ const Index = () => {
             <UserXPSystem />
             
             {/* Profit/Loss Calculator */}
-            <ProfitLossCalculator />
+            {selectedAsset && (
+              <ProfitLossCalculator asset={selectedAsset} />
+            )}
             
             {/* Voice Alert Settings */}
             <VoiceAlertSettings />
