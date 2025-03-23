@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Clock, Calendar, RefreshCw, BookOpen, History, ChevronLeft, ChevronRight, Zap, TrendingUp, TrendingDown } from 'lucide-react';
+import { Clock, Calendar, RefreshCw, BookOpen, History, ChevronLeft, ChevronRight, Zap, TrendingUp, TrendingDown, Trophy, Users, Medal, Award } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { HistoricalMarketEvent, MarketScenario } from '../types';
 import { motion } from 'framer-motion';
@@ -12,6 +12,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
 import { toast } from './ui/use-toast';
+import HistoricalMarketEvents from './HistoricalMarketEvents';
+import TimeCapsuleChallenge from './TimeCapsuleChallenge';
 
 // Mock historical events data
 const historicalEvents: HistoricalMarketEvent[] = [
@@ -74,6 +76,72 @@ const historicalEvents: HistoricalMarketEvent[] = [
     date: new Date('2024-01-10'),
     event: "SEC approves Bitcoin Spot ETFs",
     impact: "positive"
+  },
+  // Additional historical events for a richer library
+  {
+    date: new Date('2013-04-10'),
+    event: "Bitcoin price crashes from $260 to $50 in a day",
+    impact: "negative"
+  },
+  {
+    date: new Date('2014-02-24'),
+    event: "Mt. Gox exchange files for bankruptcy after 850,000 BTC hack",
+    impact: "negative"
+  },
+  {
+    date: new Date('2015-07-30'),
+    event: "Ethereum network goes live with Frontier release",
+    impact: "positive"
+  },
+  {
+    date: new Date('2016-06-17'),
+    event: "The DAO hack occurs, Ethereum loses over 50% of value",
+    impact: "negative"
+  },
+  {
+    date: new Date('2017-08-01'),
+    event: "Bitcoin Cash hard fork occurs from original Bitcoin",
+    impact: "neutral"
+  },
+  {
+    date: new Date('2019-06-18'),
+    event: "Facebook announces Libra cryptocurrency project",
+    impact: "positive"
+  },
+  {
+    date: new Date('2020-05-11'),
+    event: "Bitcoin's third halving reduces block reward to 6.25 BTC",
+    impact: "positive"
+  },
+  {
+    date: new Date('2020-12-16'),
+    event: "Bitcoin breaks $20,000 for the first time",
+    impact: "positive"
+  },
+  {
+    date: new Date('2021-03-13'),
+    event: "Bitcoin reaches $60,000 for the first time",
+    impact: "positive"
+  },
+  {
+    date: new Date('2021-11-10'),
+    event: "Bitcoin reaches all-time high of $69,000",
+    impact: "positive"
+  },
+  {
+    date: new Date('2022-01-21'),
+    event: "Bitcoin drops below $35,000, losing 50% from ATH",
+    impact: "negative"
+  },
+  {
+    date: new Date('2022-06-18'),
+    event: "Bitcoin falls below $20,000 for first time since 2020",
+    impact: "negative"
+  },
+  {
+    date: new Date('2023-11-09'),
+    event: "Bitcoin reclaims $37,000 level on BlackRock ETF speculation",
+    impact: "positive"
   }
 ];
 
@@ -134,6 +202,39 @@ const marketScenarios: MarketScenario[] = [
     volatility: 70,
     startDate: new Date('2024-01-01'),
     endDate: new Date('2024-01-31')
+  },
+  // Additional scenarios for variety
+  {
+    id: "dao-hack",
+    name: "The DAO Hack",
+    description: "The Ethereum DAO hack and subsequent fork controversy",
+    volatility: 85,
+    startDate: new Date('2016-06-15'),
+    endDate: new Date('2016-07-15')
+  },
+  {
+    id: "ico-boom",
+    name: "ICO Boom Period",
+    description: "The 2017 Initial Coin Offering craze that created thousands of new tokens",
+    volatility: 75,
+    startDate: new Date('2017-06-01'),
+    endDate: new Date('2017-09-30')
+  },
+  {
+    id: "defi-summer",
+    name: "DeFi Summer 2020",
+    description: "The explosion of decentralized finance projects and yield farming",
+    volatility: 80,
+    startDate: new Date('2020-06-01'),
+    endDate: new Date('2020-09-30')
+  },
+  {
+    id: "nft-mania",
+    name: "NFT Mania",
+    description: "The period when NFTs became mainstream and saw record-breaking sales",
+    volatility: 75,
+    startDate: new Date('2021-02-01'),
+    endDate: new Date('2021-05-31')
   }
 ];
 
@@ -195,7 +296,7 @@ const getHistoricalPrice = (assetId: string, date: Date, scenarioId: string): nu
   // Different patterns for different scenarios
   let modifier = 1;
   
-  if (scenarioId === 'bull-2017' || scenarioId === 'bull-2021') {
+  if (scenarioId === 'bull-2017' || scenarioId === 'bull-2021' || scenarioId === 'etf-approval') {
     // Bull runs trend upward with occasional dips
     modifier = 1 + (daysSinceStart / 100) + (Math.sin(daysSinceStart / 10) * 0.1);
   } else if (scenarioId === 'bear-2018') {
@@ -211,6 +312,20 @@ const getHistoricalPrice = (assetId: string, date: Date, scenarioId: string): nu
   } else if (scenarioId === 'luna-crash' || scenarioId === 'ftx-collapse') {
     // Sharp crash with no immediate recovery
     modifier = Math.max(0.1, 1 - (daysSinceStart / 20) * 0.7);
+  } else if (scenarioId === 'dao-hack') {
+    // Sharp drop followed by slow recovery
+    if (daysSinceStart < 15) {
+      modifier = 1 - (daysSinceStart / 15) * 0.6;
+    } else {
+      modifier = 0.4 + ((daysSinceStart - 15) / 40) * 0.3;
+    }
+  } else if (scenarioId === 'ico-boom' || scenarioId === 'defi-summer' || scenarioId === 'nft-mania') {
+    // Explosive growth followed by cooldown
+    if (daysSinceStart < 60) {
+      modifier = 1 + (daysSinceStart / 40) * 1.5;
+    } else {
+      modifier = 2.5 - ((daysSinceStart - 60) / 60) * 0.5;
+    }
   }
   
   // Add random daily volatility
@@ -219,42 +334,62 @@ const getHistoricalPrice = (assetId: string, date: Date, scenarioId: string): nu
   return basePrice * modifier * (1 + dailyVolatility);
 };
 
+// Achievement system to gamify the experience
+interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  condition: (simulation: SimulationState) => boolean;
+  isUnlocked: boolean;
+  xpReward: number;
+}
+
+const achievementsList: Achievement[] = [
+  {
+    id: 'first-trade',
+    title: 'First Steps',
+    description: 'Complete your first trade in the time machine',
+    icon: <Medal className="h-4 w-4" />,
+    condition: (sim: SimulationState) => sim.tradesHistory.length > 0,
+    isUnlocked: false,
+    xpReward: 50
+  },
+  {
+    id: 'profit-master',
+    title: 'Profit Master',
+    description: 'Achieve 50% portfolio growth in any scenario',
+    icon: <TrendingUp className="h-4 w-4" />,
+    condition: (sim: SimulationState) => {
+      const initialValue = sim.historicalPerformance[0].value;
+      const currentValue = sim.portfolioValue;
+      return ((currentValue - initialValue) / initialValue) * 100 >= 50;
+    },
+    isUnlocked: false,
+    xpReward: 100
+  },
+  {
+    id: 'time-traveler',
+    title: 'Time Traveler',
+    description: 'Complete a full scenario simulation',
+    icon: <Clock className="h-4 w-4" />,
+    condition: (sim: SimulationState) => sim.day >= sim.totalDays,
+    isUnlocked: false,
+    xpReward: 75
+  }
+];
+
 const CryptoTimeMachine: React.FC = () => {
   const { isDark } = useTheme();
   const [selectedYear, setSelectedYear] = useState<string>('2023');
   const [selectedScenario, setSelectedScenario] = useState<string>('bull-2021');
   const [activeTab, setActiveTab] = useState<string>('events');
-  const [eventsPage, setEventsPage] = useState(0);
   const [simulation, setSimulation] = useState<SimulationState>(initialSimulation);
-  const eventsPerPage = 3;
-  
-  // Filter events by selected year
-  const filteredEvents = historicalEvents.filter(event => 
-    event.date.getFullYear() === parseInt(selectedYear)
-  );
-  
-  // Get events for current page
-  const currentEvents = filteredEvents.slice(
-    eventsPage * eventsPerPage, 
-    (eventsPage * eventsPerPage) + eventsPerPage
-  );
+  const [achievements, setAchievements] = useState<Achievement[]>(achievementsList);
+  const [selectedEvent, setSelectedEvent] = useState<HistoricalMarketEvent | undefined>(undefined);
   
   // Get selected scenario details
   const selectedScenarioDetails = marketScenarios.find(scenario => scenario.id === selectedScenario);
-  
-  const handlePrevPage = () => {
-    if (eventsPage > 0) setEventsPage(prev => prev - 1);
-  };
-  
-  const handleNextPage = () => {
-    if ((eventsPage + 1) * eventsPerPage < filteredEvents.length) {
-      setEventsPage(prev => prev + 1);
-    }
-  };
-  
-  // Years for selection dropdown (from 2009 Bitcoin genesis to current year)
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: currentYear - 2008 }, (_, i) => (2009 + i).toString());
   
   // Set up scenario simulation
   const startSimulation = () => {
@@ -349,6 +484,24 @@ const CryptoTimeMachine: React.FC = () => {
     
     return () => clearInterval(interval);
   }, [simulation.isRunning, simulation.speed, simulation.day]);
+  
+  // Check for achievements in each simulation update
+  useEffect(() => {
+    const updatedAchievements = achievements.map(achievement => {
+      if (!achievement.isUnlocked && achievement.condition(simulation)) {
+        // Achievement just unlocked
+        toast({
+          title: "Achievement Unlocked!",
+          description: `${achievement.title}: ${achievement.description} (+${achievement.xpReward} XP)`,
+          duration: 5000,
+        });
+        return { ...achievement, isUnlocked: true };
+      }
+      return achievement;
+    });
+    
+    setAchievements(updatedAchievements);
+  }, [simulation]);
   
   // Play/pause simulation
   const toggleSimulation = () => {
@@ -462,6 +615,38 @@ const CryptoTimeMachine: React.FC = () => {
     });
   };
   
+  // Handle selection of a historical event
+  const handleSelectEvent = (event: HistoricalMarketEvent) => {
+    setSelectedEvent(event);
+    // Find a corresponding scenario or create a custom one
+    const eventYear = event.date.getFullYear().toString();
+    const matchingScenario = marketScenarios.find(
+      s => s.startDate && s.startDate.getFullYear() === parseInt(eventYear)
+    );
+    
+    if (matchingScenario) {
+      setSelectedScenario(matchingScenario.id);
+    }
+    
+    toast({
+      title: "Event Selected",
+      description: `You've selected: ${event.event}. You can now create a challenge or simulate this event.`,
+      duration: 3000,
+    });
+  };
+  
+  // Handle scenario selection
+  const handleSelectScenario = (scenario: MarketScenario) => {
+    setSelectedScenario(scenario.id);
+    setActiveTab('scenarios');
+    
+    toast({
+      title: "Scenario Selected",
+      description: `${scenario.name} selected. You can now start a simulation of this market period.`,
+      duration: 3000,
+    });
+  };
+  
   return (
     <div className={`neo-brutalist-sm ${isDark ? 'dark:bg-gray-800' : 'bg-white'} p-4 rounded-xl overflow-hidden`}>
       <div className="flex items-center justify-between mb-4">
@@ -476,90 +661,28 @@ const CryptoTimeMachine: React.FC = () => {
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-4">
+        <TabsList className="grid w-full grid-cols-4 mb-4">
           <TabsTrigger value="events">Historical Events</TabsTrigger>
           <TabsTrigger value="scenarios">Market Scenarios</TabsTrigger>
           <TabsTrigger value="simulator">Time Simulator</TabsTrigger>
+          <TabsTrigger value="challenges">Challenges</TabsTrigger>
         </TabsList>
         
         <TabsContent value="events" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <label className="text-xs text-gray-600 dark:text-gray-400">Select Year</label>
-            <Select 
-              value={selectedYear} 
-              onValueChange={setSelectedYear}
-            >
-              <SelectTrigger className="w-28 h-8 text-xs">
-                <SelectValue placeholder="Year" />
-              </SelectTrigger>
-              <SelectContent>
-                {years.reverse().map(year => (
-                  <SelectItem key={year} value={year}>{year}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="space-y-3 min-h-[250px]">
-            {currentEvents.length > 0 ? (
-              currentEvents.map((event, index) => (
-                <motion.div 
-                  key={index}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: index * 0.1 }}
-                  className={`p-3 rounded-lg border ${
-                    event.impact === 'positive' 
-                      ? 'border-green-200 bg-green-50 dark:bg-green-900/10 dark:border-green-800/30' 
-                      : 'border-red-200 bg-red-50 dark:bg-red-900/10 dark:border-red-800/30'
-                  }`}
-                >
-                  <div className="flex justify-between items-start mb-1">
-                    <span className="font-medium">{event.event}</span>
-                  </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    {event.date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                  </div>
-                </motion.div>
-              ))
-            ) : (
-              <div className="text-center py-10 text-gray-500 dark:text-gray-400">
-                <History className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                <p>No major events found for {selectedYear}</p>
-                <p className="text-xs mt-1">Try selecting a different year</p>
-              </div>
-            )}
-          </div>
-          
-          {filteredEvents.length > eventsPerPage && (
-            <div className="flex justify-between items-center pt-2">
-              <button 
-                onClick={handlePrevPage}
-                disabled={eventsPage === 0}
-                className={`p-1 rounded-full ${
-                  eventsPage === 0 
-                    ? 'text-gray-400 cursor-not-allowed' 
-                    : 'text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700'
-                }`}
-              >
-                <ChevronLeft size={18} />
-              </button>
-              <span className="text-xs text-gray-500 dark:text-gray-400">
-                Page {eventsPage + 1} of {Math.ceil(filteredEvents.length / eventsPerPage)}
-              </span>
-              <button 
-                onClick={handleNextPage}
-                disabled={(eventsPage + 1) * eventsPerPage >= filteredEvents.length}
-                className={`p-1 rounded-full ${
-                  (eventsPage + 1) * eventsPerPage >= filteredEvents.length
-                    ? 'text-gray-400 cursor-not-allowed' 
-                    : 'text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700'
-                }`}
-              >
-                <ChevronRight size={18} />
-              </button>
-            </div>
-          )}
+          <HistoricalMarketEvents 
+            selectedYear={selectedYear}
+            onSelectEvent={handleSelectEvent}
+            onSelectYear={setSelectedYear}
+            historicalEvents={historicalEvents}
+          />
+        </TabsContent>
+        
+        <TabsContent value="challenges" className="space-y-4">
+          <TimeCapsuleChallenge 
+            scenarios={marketScenarios}
+            selectedEvent={selectedEvent}
+            onSelectScenario={handleSelectScenario}
+          />
         </TabsContent>
         
         <TabsContent value="scenarios" className="space-y-4">
@@ -769,6 +892,49 @@ const CryptoTimeMachine: React.FC = () => {
                 </CardFooter>
               </Card>
               
+              {/* Achievements */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center">
+                    <Award size={14} className="mr-1" />
+                    Achievements
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {achievements.map(achievement => (
+                      <div 
+                        key={achievement.id} 
+                        className={`p-2 rounded-md border flex justify-between items-center ${
+                          achievement.isUnlocked 
+                            ? 'border-green-200 bg-green-50 dark:bg-green-900/10' 
+                            : 'border-gray-200 bg-gray-50 dark:bg-gray-800/50'
+                        }`}
+                      >
+                        <div className="flex items-center">
+                          <div className={`p-1 rounded-full mr-2 ${
+                            achievement.isUnlocked ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-400'
+                          }`}>
+                            {achievement.icon}
+                          </div>
+                          <div>
+                            <div className="font-medium text-sm">{achievement.title}</div>
+                            <div className="text-xs text-gray-600 dark:text-gray-400">{achievement.description}</div>
+                          </div>
+                        </div>
+                        <div className="text-xs font-bold">
+                          {achievement.isUnlocked ? (
+                            <span className="text-green-600">+{achievement.xpReward} XP</span>
+                          ) : (
+                            <span className="text-gray-400">Locked</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+              
               {/* Recent trades */}
               {simulation.tradesHistory.length > 0 && (
                 <Card>
@@ -798,18 +964,40 @@ const CryptoTimeMachine: React.FC = () => {
                   </CardContent>
                 </Card>
               )}
-              
             </motion.div>
           ) : (
             <div className="flex flex-col items-center justify-center py-10 text-center">
               <Zap size={48} className="text-yellow-500 mb-4" />
               <h3 className="font-bold text-lg mb-2">Ready to Time Travel?</h3>
               <p className="text-gray-500 text-sm mb-6 max-w-md">
-                Select a historic market scenario and hit "Simulate This Market" to see how your portfolio would have performed.
+                Select a historic market scenario or event and hit "Simulate This Market" to see how your portfolio would have performed.
               </p>
-              <Button onClick={() => setActiveTab('scenarios')}>
-                Choose a Scenario
-              </Button>
+              <div className="flex space-x-3">
+                <Button onClick={() => setActiveTab('scenarios')}>
+                  Choose a Scenario
+                </Button>
+                <Button variant="outline" onClick={() => setActiveTab('events')}>
+                  Explore Events
+                </Button>
+              </div>
+              
+              <div className="mt-8 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-md border border-amber-200 dark:border-amber-800/40 max-w-md">
+                <div className="flex items-center text-amber-800 dark:text-amber-400 font-medium mb-1">
+                  <Trophy size={14} className="mr-1" /> 
+                  Challenge Yourself
+                </div>
+                <p className="text-xs text-amber-700 dark:text-amber-300">
+                  Complete scenarios to earn achievements and XP. See how you rank on the global leaderboard and become a legendary trader!
+                </p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="mt-2 text-xs w-full border-amber-300 dark:border-amber-700"
+                  onClick={() => setActiveTab('challenges')}
+                >
+                  View Challenges
+                </Button>
+              </div>
             </div>
           )}
         </TabsContent>

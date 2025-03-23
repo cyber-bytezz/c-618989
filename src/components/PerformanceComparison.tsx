@@ -6,7 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useQuery } from '@tanstack/react-query';
 import { fetchAssetHistory } from '@/lib/api';
-import { AssetHistoryData } from '@/types';
+import { AssetHistoryData, TimeFrame } from '@/types';
 import PriceChart from './PriceChart';
 import { Info } from 'lucide-react';
 
@@ -33,13 +33,13 @@ const PerformanceComparison = ({ assetId, className = '', timeFrame = 'd1', onTi
   // Fetch main asset data
   const { data: mainAssetData, isLoading: mainLoading } = useQuery({
     queryKey: ['assetHistory', assetId, effectiveTimeframe],
-    queryFn: () => fetchAssetHistory(assetId, effectiveTimeframe as any),
+    queryFn: () => fetchAssetHistory(assetId, effectiveTimeframe as TimeFrame),
   });
   
   // Fetch comparison asset data
   const { data: comparisonAssetData, isLoading: comparisonLoading } = useQuery({
     queryKey: ['assetHistory', comparisonAsset, effectiveTimeframe],
-    queryFn: () => fetchAssetHistory(comparisonAsset, effectiveTimeframe as any),
+    queryFn: () => fetchAssetHistory(comparisonAsset, effectiveTimeframe as TimeFrame),
     enabled: showComparison,
   });
   

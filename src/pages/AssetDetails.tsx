@@ -1,274 +1,258 @@
-import { useNavigate, useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { 
-  fetchAsset, 
-  fetchAssetHistory, 
-  formatMarketCap, 
-  formatPercent, 
-  formatPrice, 
-  calculateVolatility 
-} from '../lib/api';
-import Header from '../components/Header';
-import PriceChart, { TIME_FRAME_OPTIONS } from '../components/PriceChart';
-import { ChevronLeft, ArrowUp, ArrowDown, ExternalLink, Heart, Activity, AlertTriangle } from 'lucide-react';
-import { useWatchlist } from '../contexts/WatchlistContext';
-import { useState } from 'react';
-import { TimeFrame } from '../types';
-import ThemeToggle from '../components/ThemeToggle';
-import PerformanceComparison from '../components/PerformanceComparison';
-import AssetComment from '../components/AssetComment';
-import ProfitLossCalculator from '../components/ProfitLossCalculator';
-import LoadingSkeleton from '../components/LoadingSkeleton';
-import RefreshTimer from '../components/RefreshTimer';
-import { useTheme } from '../contexts/ThemeContext';
 
-const AssetDetails = () => {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const { isInWatchlist, addToWatchlist, removeFromWatchlist } = useWatchlist();
+import { useEffect, useState } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { fetchAsset, fetchAssetHistory, formatPrice, formatPercent, formatMarketCap, calculateVolatility } from '@/lib/api';
+import { ArrowLeft, TrendingUp, TrendingDown, ExternalLink, Layers, Activity } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
+import { TimeFrame } from '@/types';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import PriceChart from '@/components/PriceChart';
+import LoadingSkeleton from '@/components/LoadingSkeleton';
+import PerformanceComparison from '@/components/PerformanceComparison';
+import HODLSentiment from '@/components/HODLSentiment';
+import CryptoWhisper from '@/components/CryptoWhisper';
+import ProfitLossCalculator from '@/components/ProfitLossCalculator';
+
+// Define the URL parameters
+interface AssetDetailParams {
+  assetId: string;
+}
+
+const AssetDetail = () => {
+  const { assetId = '' } = useParams<AssetDetailParams>();
   const [timeFrame, setTimeFrame] = useState<TimeFrame>('d1');
-  const { isDark } = useTheme();
+  const [tab, setTab] = useState('price');
   
-  const { data: assetData, isLoading: isAssetLoading, dataUpdatedAt } = useQuery({
-    queryKey: ['asset', id],
-    queryFn: () => fetchAsset(id!),
-    enabled: !!id,
-    refetchInterval: 30000, // 30 seconds
+  // Fetch asset details
+  const { data: assetData, isLoading: assetLoading } = useQuery({
+    queryKey: ['asset', assetId],
+    queryFn: () => fetchAsset(assetId),
+    refetchInterval: 60000, // Refetch every minute
   });
   
-  const { data: historyData, isLoading: isHistoryLoading } = useQuery({
-    queryKey: ['assetHistory', id, timeFrame],
-    queryFn: () => fetchAssetHistory(id!, timeFrame),
-    enabled: !!id,
+  // Fetch price history based on selected time frame
+  const { data: historyData, isLoading: historyLoading } = useQuery({
+    queryKey: ['assetHistory', assetId, timeFrame],
+    queryFn: () => fetchAssetHistory(assetId, timeFrame),
   });
   
-  const asset = assetData?.data;
-  const history = historyData?.data;
-  const changePercent = asset ? parseFloat(asset.changePercent24Hr) : 0;
-  const isPositive = changePercent > 0;
-  
-  const volatility = history && history.length > 0 ? calculateVolatility(history) : null;
-  
-  const toggleWatchlist = () => {
-    if (!id) return;
+  // Format price history for chart
+  const formatPriceHistory = () => {
+    if (!historyData?.data) return [];
     
-    if (isInWatchlist(id)) {
-      removeFromWatchlist(id);
-    } else {
-      addToWatchlist(id);
-    }
+    return historyData.data.map(point => ({
+      date: new Date(point.time),
+      value: parseFloat(point.priceUsd)
+    }));
   };
   
+  // Calculate volatility
+  const volatility = historyData?.data ? calculateVolatility(historyData.data) : 0;
+  
+  // Handle time frame change
+  const handleTimeFrameChange = (value: string) => {
+    setTimeFrame(value as TimeFrame);
+  };
+  
+  const priceChangePercent = assetData?.data ? parseFloat(assetData.data.changePercent24Hr) : 0;
+  const isPriceUp = priceChangePercent >= 0;
+  
+  // For SEO and social sharing
+  const assetName = assetData?.data?.name || assetId;
+  const assetSymbol = assetData?.data?.symbol || '';
+  const assetPrice = assetData?.data?.priceUsd ? formatPrice(assetData.data.priceUsd) : '$0.00';
+  
   return (
-    <div className={`min-h-screen ${isDark ? 'dark bg-gray-900' : 'bg-neo-gray'}`}>
-      <Header />
+    <>
+      <Helmet>
+        <title>{assetName} ({assetSymbol}) Price - CryptoNeo</title>
+        <meta name="description" content={`${assetName} (${assetSymbol}) live price, charts, market cap, and latest news. Get the latest ${assetName} information on CryptoNeo.`} />
+      </Helmet>
       
-      <main className="max-w-4xl mx-auto px-4 py-8 animate-slide-up dark:text-white">
-        <div className="flex justify-between items-center mb-6">
-          <button 
-            onClick={() => navigate('/')}
-            className="flex items-center text-sm font-medium hover:opacity-70 transition-opacity"
-          >
-            <ChevronLeft size={16} />
-            <span>Back to all assets</span>
-          </button>
-          
-          <ThemeToggle />
-        </div>
+      <div className="container mx-auto p-4">
+        {/* Back button */}
+        <Link to="/" className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 mb-4">
+          <ArrowLeft size={16} className="mr-1" />
+          Back to Dashboard
+        </Link>
         
-        {isAssetLoading ? (
-          <div className="space-y-4">
-            <LoadingSkeleton variant="detail" />
-            <LoadingSkeleton variant="chart" />
-            <LoadingSkeleton variant="detail" />
-          </div>
-        ) : asset ? (
+        {assetLoading ? (
+          <LoadingSkeleton />
+        ) : assetData ? (
           <div className="space-y-6">
-            <div className="neo-brutalist bg-white p-6 rounded-xl dark:bg-gray-800">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div className="flex items-center">
-                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-neo-gray font-mono text-lg mr-4 dark:bg-gray-700">
-                    {asset.rank}
-                  </div>
-                  <div>
-                    <h1 className="text-2xl font-bold">{asset.name}</h1>
-                    <div className="text-xl text-gray-500 font-mono dark:text-gray-400">{asset.symbol}</div>
-                  </div>
-                  <button 
-                    onClick={toggleWatchlist}
-                    className="ml-3 p-2 rounded-full hover:bg-gray-100 transition-colors dark:hover:bg-gray-700"
-                    aria-label={isInWatchlist(id!) ? "Remove from watchlist" : "Add to watchlist"}
-                  >
-                    <Heart 
-                      size={24} 
-                      fill={isInWatchlist(id!) ? "#ff3b30" : "none"} 
-                      stroke={isInWatchlist(id!) ? "#ff3b30" : "currentColor"}
-                    />
-                  </button>
+            {/* Asset header */}
+            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-2xl font-bold">{assetData.data.name}</h1>
+                  <Badge variant="outline" className="text-xs font-semibold">
+                    {assetData.data.symbol}
+                  </Badge>
+                  <Badge variant="secondary" className="text-xs">
+                    Rank #{assetData.data.rank}
+                  </Badge>
                 </div>
                 
-                <div className="text-right">
-                  <div className="text-3xl font-mono font-semibold">{formatPrice(asset.priceUsd)}</div>
-                  <div className={`flex items-center justify-end text-lg ${isPositive ? 'text-neo-success' : 'text-neo-danger'}`}>
-                    {isPositive ? <ArrowUp size={18} /> : <ArrowDown size={18} />}
-                    <span>{formatPercent(asset.changePercent24Hr)}</span>
-                    <span className="text-gray-500 text-sm ml-1 dark:text-gray-400">24h</span>
-                  </div>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="text-3xl font-bold">
+                    {formatPrice(assetData.data.priceUsd)}
+                  </span>
+                  <span className={`text-sm font-medium ${isPriceUp ? 'text-green-500' : 'text-red-500'}`}>
+                    {isPriceUp ? <TrendingUp size={16} className="inline mr-1" /> : <TrendingDown size={16} className="inline mr-1" />}
+                    {formatPercent(assetData.data.changePercent24Hr)}
+                  </span>
                 </div>
               </div>
               
-              {dataUpdatedAt && (
-                <div className="mt-4 flex justify-end">
-                  <RefreshTimer 
-                    lastUpdated={dataUpdatedAt} 
-                    pollingInterval={30000} 
-                  />
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+                  <div className="text-xs text-gray-500 mb-1">Market Cap</div>
+                  <div className="font-semibold">{formatMarketCap(assetData.data.marketCapUsd)}</div>
                 </div>
-              )}
-            </div>
-            
-            <div>
-              <div className="flex justify-between items-center mb-3">
-                <h2 className="text-xl font-semibold">Price Chart</h2>
-                <div className="flex space-x-2 overflow-x-auto">
-                  {TIME_FRAME_OPTIONS.map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() => setTimeFrame(option.value)}
-                      className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                        timeFrame === option.value 
-                          ? 'bg-neo-black text-white dark:bg-neo-accent' 
-                          : 'bg-neo-gray hover:bg-neo-gray/80 dark:bg-gray-700 dark:hover:bg-gray-600'
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
+                <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+                  <div className="text-xs text-gray-500 mb-1">Volume (24h)</div>
+                  <div className="font-semibold">{formatMarketCap(assetData.data.volumeUsd24Hr)}</div>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+                  <div className="text-xs text-gray-500 mb-1">Volatility</div>
+                  <div className="font-semibold">{volatility.toFixed(2)}%</div>
                 </div>
               </div>
-              
-              {isHistoryLoading ? (
-                <LoadingSkeleton variant="chart" />
-              ) : (
-                <PriceChart 
-                  data={history || []} 
-                  color={isPositive ? '#34c759' : '#ff3b30'} 
-                  timeFrame={timeFrame}
-                />
-              )}
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="neo-brutalist bg-white rounded-xl p-6 dark:bg-gray-800">
-                <div className="flex items-center mb-4">
-                  <Activity size={18} className="mr-2 text-neo-accent" />
-                  <h2 className="text-xl font-semibold">Market Stats</h2>
-                </div>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <h3 className="text-sm text-gray-500 mb-1 dark:text-gray-400">Market Cap</h3>
-                    <div className="font-mono text-lg font-medium">{formatMarketCap(asset.marketCapUsd)}</div>
-                  </div>
-                  <div>
-                    <h3 className="text-sm text-gray-500 mb-1 dark:text-gray-400">24h Volume</h3>
-                    <div className="font-mono text-lg font-medium">{formatMarketCap(asset.volumeUsd24Hr)}</div>
-                  </div>
-                  <div>
-                    <h3 className="text-sm text-gray-500 mb-1 dark:text-gray-400">Circulating Supply</h3>
-                    <div className="font-mono text-lg font-medium">
-                      {parseFloat(asset.supply).toLocaleString()} {asset.symbol}
+            {/* Tabs for different content sections */}
+            <Tabs defaultValue="price" value={tab} onValueChange={setTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="price">Price Chart</TabsTrigger>
+                <TabsTrigger value="comparison">Performance</TabsTrigger>
+                <TabsTrigger value="sentiment">Sentiment</TabsTrigger>
+                <TabsTrigger value="tools">Tools</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="price" className="space-y-4 mt-4">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between items-center">
+                      <CardTitle>Price Chart</CardTitle>
+                      <Select 
+                        value={timeFrame} 
+                        onValueChange={handleTimeFrameChange}
+                      >
+                        <SelectTrigger className="w-[120px]">
+                          <SelectValue placeholder="Timeframe" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="h1">1 Hour</SelectItem>
+                          <SelectItem value="h12">12 Hours</SelectItem>
+                          <SelectItem value="d1">1 Day</SelectItem>
+                          <SelectItem value="w1">1 Week</SelectItem>
+                          <SelectItem value="m1">1 Month</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                  </div>
-                  {asset.maxSupply && (
-                    <div>
-                      <h3 className="text-sm text-gray-500 mb-1 dark:text-gray-400">Max Supply</h3>
-                      <div className="font-mono text-lg font-medium">
-                        {parseFloat(asset.maxSupply).toLocaleString()} {asset.symbol}
+                    <CardDescription>
+                      Price history for {assetData.data.name}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {historyLoading ? (
+                      <div className="h-80 flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                      </div>
+                    ) : (
+                      <div className="h-80">
+                        <PriceChart 
+                          data={formatPriceHistory()} 
+                          height={320} 
+                          mainLabel={assetData.data.name}
+                        />
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Key Stats</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      <div>
+                        <div className="text-sm text-gray-500 mb-1">Supply</div>
+                        <div className="font-semibold">{formatMarketCap(assetData.data.supply)}</div>
+                      </div>
+                      {assetData.data.maxSupply && (
+                        <div>
+                          <div className="text-sm text-gray-500 mb-1">Max Supply</div>
+                          <div className="font-semibold">{formatMarketCap(assetData.data.maxSupply)}</div>
+                        </div>
+                      )}
+                      <div>
+                        <div className="text-sm text-gray-500 mb-1">VWAP (24h)</div>
+                        <div className="font-semibold">{formatPrice(assetData.data.vwap24Hr)}</div>
                       </div>
                     </div>
-                  )}
-                  <div>
-                    <h3 className="text-sm text-gray-500 mb-1 dark:text-gray-400">VWAP (24h)</h3>
-                    <div className="font-mono text-lg font-medium">{formatPrice(asset.vwap24Hr)}</div>
-                  </div>
-                  <div>
-                    <h3 className="text-sm text-gray-500 mb-1 dark:text-gray-400">Volatility (24h)</h3>
-                    <div className="font-mono text-lg font-medium flex items-center">
-                      {volatility ? (
-                        <>
-                          {volatility.toFixed(2)}%
-                          {volatility > 5 && <AlertTriangle size={16} className="ml-1 text-neo-warning" />}
-                        </>
-                      ) : 'N/A'}
-                    </div>
-                  </div>
-                  {asset.explorer && (
-                    <div>
-                      <h3 className="text-sm text-gray-500 mb-1 dark:text-gray-400">Explorer</h3>
-                      <a 
-                        href={asset.explorer} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="flex items-center text-neo-accent hover:underline font-medium"
-                      >
-                        View <ExternalLink size={14} className="ml-1" />
-                      </a>
-                    </div>
-                  )}
-                </div>
-              </div>
+                    
+                    {assetData.data.explorer && (
+                      <div className="mt-4 pt-4 border-t">
+                        <a 
+                          href={assetData.data.explorer} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 flex items-center text-sm"
+                        >
+                          <ExternalLink size={14} className="mr-1" />
+                          View on Explorer
+                        </a>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
               
-              <ProfitLossCalculator asset={asset} />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <PerformanceComparison 
-                assetId={id!} 
-                timeFrame={timeFrame}
-                onTimeFrameChange={setTimeFrame}
-              />
+              <TabsContent value="comparison" className="mt-4">
+                <PerformanceComparison 
+                  assetId={assetId} 
+                  timeFrame={timeFrame}
+                  onTimeFrameChange={handleTimeFrameChange}
+                />
+              </TabsContent>
               
-              <AssetComment assetId={id!} />
-            </div>
-            
-            <div className="neo-brutalist bg-white rounded-xl p-6 dark:bg-gray-800">
-              <h2 className="text-xl font-semibold mb-4">Performance Heatmap</h2>
-              <div className="grid grid-cols-5 gap-2">
-                {[-10, -5, -2, -1, -0.5, 0.5, 1, 2, 5, 10].map((percent) => {
-                  const isPositive = percent > 0;
-                  const intensity = Math.min(Math.abs(percent) / 10, 1);
-                  const bgColor = isPositive 
-                    ? `rgba(52, 199, 89, ${intensity})` 
-                    : `rgba(255, 59, 48, ${intensity})`;
-                  
-                  return (
-                    <div 
-                      key={percent}
-                      className="flex flex-col items-center justify-center p-2 rounded border border-gray-200 dark:border-gray-600"
-                      style={{ backgroundColor: bgColor }}
-                    >
-                      <span className={`text-xs font-medium ${intensity > 0.5 ? 'text-white' : ''}`}>
-                        {percent > 0 ? `+${percent}%` : `${percent}%`}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-              <p className="text-xs text-gray-500 mt-2 text-center dark:text-gray-400">
-                Color intensity represents market movement potential
-              </p>
-            </div>
+              <TabsContent value="sentiment" className="space-y-4 mt-4">
+                <HODLSentiment assetId={assetId} />
+                
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Community Insights</CardTitle>
+                    <CardDescription>What others are saying about {assetData.data.name}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <CryptoWhisper assetId={assetId} />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="tools" className="space-y-4 mt-4">
+                <ProfitLossCalculator assetId={assetId} currentPrice={parseFloat(assetData.data.priceUsd)} />
+              </TabsContent>
+            </Tabs>
           </div>
         ) : (
-          <div className="neo-brutalist p-6 bg-neo-danger text-white">
-            <h2 className="text-xl font-bold mb-2">Asset not found</h2>
-            <p>The asset you're looking for doesn't exist or couldn't be loaded.</p>
+          <div className="text-center py-12">
+            <h2 className="text-xl font-semibold">Asset not found</h2>
+            <p className="text-gray-500 mt-2">The asset you're looking for doesn't exist or couldn't be loaded.</p>
+            <Link to="/" className="mt-4 inline-block text-blue-600 hover:text-blue-800">
+              Return to Dashboard
+            </Link>
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </>
   );
 };
 
-export default AssetDetails;
+export default AssetDetail;

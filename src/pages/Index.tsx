@@ -53,7 +53,7 @@ export default function Home() {
             <MarketSentiment sentiment={marketSentiment} />
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-1 lg:grid-cols-1 gap-4 mb-4">
             <CryptoTimeMachine />
           </div>
           
