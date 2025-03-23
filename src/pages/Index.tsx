@@ -11,6 +11,7 @@ import MarketPredictions from '@/components/MarketPredictions';
 import UserXPSystem from '@/components/UserXPSystem';
 import CryptoStorm from '../components/CryptoStorm';
 import CryptoTimeMachine from '@/components/CryptoTimeMachine';
+import AIPortfolioRebalancer from '@/components/AIPortfolioRebalancer';
 
 export default function Home() {
   const [assets, setAssets] = useState<AssetsResponse | null>(null);
@@ -51,6 +52,10 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
             <CryptoStorm />
             <MarketSentiment sentiment={marketSentiment} />
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-1 gap-4 mb-4">
+            <AIPortfolioRebalancer assets={assets?.data} />
           </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-1 gap-4 mb-4">

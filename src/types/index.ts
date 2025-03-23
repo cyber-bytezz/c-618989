@@ -1,4 +1,3 @@
-
 export interface AssetData {
   id: string;
   rank: string;
@@ -236,4 +235,39 @@ export interface AIAdvisorSettings {
   prioritizeVolume: boolean;
   considerMarketSentiment: boolean;
   trackPerformance: boolean;
+}
+
+// New types for AI Portfolio Rebalancer
+export type RiskProfile = 'conservative' | 'moderate' | 'aggressive' | 'very_aggressive' | 'custom';
+
+export interface PortfolioAsset {
+  assetId: string;
+  name: string;
+  symbol: string;
+  amount: number;
+  valueUsd: number;
+  allocation: number; // percentage of portfolio
+}
+
+export interface Portfolio {
+  totalValueUsd: number;
+  assets: PortfolioAsset[];
+  lastRebalanced: number; // timestamp
+  performance: {
+    daily: number;
+    weekly: number;
+    monthly: number;
+  };
+  riskScore: number; // 0-100
+}
+
+export type TradeActionType = 'buy' | 'sell' | 'hold';
+
+export interface PortfolioAction {
+  assetId: string;
+  symbol: string;
+  action: TradeActionType;
+  amount: number;
+  allocationChange: number; // percentage points
+  reasoning: string;
 }
