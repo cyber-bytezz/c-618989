@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,12 +25,9 @@ const AIPortfolioRebalancer = ({ assets = [] }: AIPortfolioRebalancerProps) => {
   const [riskProfile, setRiskProfile] = useState<RiskProfile>('moderate');
   const [isAutomatedMode, setIsAutomatedMode] = useState(false);
 
-  // Load sample portfolio data when component mounts
   useEffect(() => {
     const loadPortfolio = async () => {
       try {
-        // In a real app, this would fetch from an API or database
-        // For now, we'll use mock data based on available assets
         if (assets.length > 0) {
           const mockPortfolio: Portfolio = {
             totalValueUsd: 0,
@@ -77,7 +73,7 @@ const AIPortfolioRebalancer = ({ assets = [] }: AIPortfolioRebalancerProps) => {
                 symbol: 'DOT'
               }
             ],
-            lastRebalanced: Date.now() - 86400000, // 1 day ago
+            lastRebalanced: Date.now() - 86400000,
             performance: {
               daily: 2.3,
               weekly: -1.2,
@@ -86,11 +82,9 @@ const AIPortfolioRebalancer = ({ assets = [] }: AIPortfolioRebalancerProps) => {
             riskScore: 65
           };
 
-          // Update portfolio with current asset prices
           const updatedPortfolio = calculatePortfolioBalance(mockPortfolio, assets);
           setPortfolio(updatedPortfolio);
           
-          // Generate AI suggestions
           const actions = generatePortfolioActions(updatedPortfolio, assets, riskProfile);
           setSuggestedActions(actions);
         }
@@ -105,12 +99,9 @@ const AIPortfolioRebalancer = ({ assets = [] }: AIPortfolioRebalancerProps) => {
     loadPortfolio();
   }, [assets, riskProfile]);
 
-  // Apply AI suggested changes to portfolio
   const handleApplyChanges = () => {
     if (!portfolio) return;
 
-    // In a real app, this would call an API to execute trades
-    // For demo purposes, we'll just simulate the changes
     const updatedAssets = [...portfolio.assets];
     
     suggestedActions.forEach(action => {
@@ -137,7 +128,6 @@ const AIPortfolioRebalancer = ({ assets = [] }: AIPortfolioRebalancerProps) => {
     toast.success("Portfolio rebalanced successfully");
   };
 
-  // Toggle automated mode
   const toggleAutomatedMode = () => {
     setIsAutomatedMode(!isAutomatedMode);
     toast.success(isAutomatedMode 
@@ -145,7 +135,6 @@ const AIPortfolioRebalancer = ({ assets = [] }: AIPortfolioRebalancerProps) => {
       : "Automated rebalancing enabled");
   };
 
-  // Calculate time since last rebalance
   const getTimeSinceRebalance = () => {
     if (!portfolio) return "Never";
     
@@ -277,7 +266,7 @@ const AIPortfolioRebalancer = ({ assets = [] }: AIPortfolioRebalancerProps) => {
                       <li key={index} className="flex items-start">
                         <Badge 
                           className="mt-0.5 mr-2"
-                          variant={action.action === 'buy' ? 'success' : 'destructive'}
+                          variant={action.action === 'buy' ? 'default' : 'destructive'}
                         >
                           {action.action.toUpperCase()}
                         </Badge>
@@ -341,7 +330,6 @@ const AIPortfolioRebalancer = ({ assets = [] }: AIPortfolioRebalancerProps) => {
   );
 };
 
-// Helper functions for UI
 const getRiskLabel = (risk: RiskProfile): string => {
   switch (risk) {
     case 'conservative': return 'Conservative';

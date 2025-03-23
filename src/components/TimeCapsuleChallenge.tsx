@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   Award, 
@@ -244,36 +243,25 @@ const TimeCapsuleChallenge: React.FC<TimeCapsuleChallengeProps> = ({
                       </div>
                     </div>
                     
-                    {challenge.isCompleted ? (
-                      <div className="text-right">
-                        <Badge variant="success" className="mb-2">Completed</Badge>
-                        <div className="text-xs">
-                          Your performance: 
-                          <span className="font-bold ml-1 text-green-500">
-                            +{challenge.userPerformance}%
-                          </span>
-                        </div>
-                      </div>
-                    ) : (
-                      <Button 
-                        size="sm" 
-                        className="mt-1"
-                        onClick={() => handleJoinChallenge(challenge)}
+                    {challenge.isCompleted && (
+                      <Badge 
+                        variant="default" 
+                        className="text-xs"
                       >
-                        Join Challenge
-                      </Button>
+                        Completed
+                      </Badge>
+                    )}
+                    
+                    {challenge.isCompleted && (
+                      <div className="mt-2">
+                        <div className="text-xs text-gray-500 flex justify-between mb-1">
+                          <span>Your Progress</span>
+                          <span>100%</span>
+                        </div>
+                        <Progress value={100} className="h-1" />
+                      </div>
                     )}
                   </div>
-                  
-                  {challenge.isCompleted && (
-                    <div className="mt-2">
-                      <div className="text-xs text-gray-500 flex justify-between mb-1">
-                        <span>Your Progress</span>
-                        <span>100%</span>
-                      </div>
-                      <Progress value={100} className="h-1" />
-                    </div>
-                  )}
                 </motion.div>
               ))}
             </div>
