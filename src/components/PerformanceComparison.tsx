@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useQuery } from '@tanstack/react-query';
 import { fetchAssetHistory } from '@/lib/api';
 import { AssetHistoryData } from '@/types';
-import { PriceChart } from './PriceChart';
+import PriceChart from './PriceChart';
 import { Info } from 'lucide-react';
 
 interface PriceDataPoint {
@@ -18,23 +18,28 @@ interface PriceDataPoint {
 interface PerformanceComparisonProps {
   assetId: string;
   className?: string;
+  timeFrame?: string;
+  onTimeFrameChange?: (value: string) => void;
 }
 
-const PerformanceComparison = ({ assetId, className = '' }: PerformanceComparisonProps) => {
+const PerformanceComparison = ({ assetId, className = '', timeFrame = 'd1', onTimeFrameChange }: PerformanceComparisonProps) => {
   const [comparisonAsset, setComparisonAsset] = useState('ethereum');
-  const [timeframe, setTimeframe] = useState('d1');
+  const [localTimeframe, setLocalTimeframe] = useState(timeFrame);
   const [showComparison, setShowComparison] = useState(true);
+  
+  // Use either the prop timeFrame or local state
+  const effectiveTimeframe = onTimeFrameChange ? timeFrame : localTimeframe;
   
   // Fetch main asset data
   const { data: mainAssetData, isLoading: mainLoading } = useQuery({
-    queryKey: ['assetHistory', assetId, timeframe],
-    queryFn: () => fetchAssetHistory(assetId, timeframe as any),
+    queryKey: ['assetHistory', assetId, effectiveTimeframe],
+    queryFn: () => fetchAssetHistory(assetId, effectiveTimeframe as any),
   });
   
   // Fetch comparison asset data
   const { data: comparisonAssetData, isLoading: comparisonLoading } = useQuery({
-    queryKey: ['assetHistory', comparisonAsset, timeframe],
-    queryFn: () => fetchAssetHistory(comparisonAsset, timeframe as any),
+    queryKey: ['assetHistory', comparisonAsset, effectiveTimeframe],
+    queryFn: () => fetchAssetHistory(comparisonAsset, effectiveTimeframe as any),
     enabled: showComparison,
   });
   
@@ -64,7 +69,11 @@ const PerformanceComparison = ({ assetId, className = '' }: PerformanceCompariso
   
   // Handle timeframe change
   const handleTimeframeChange = (value: string) => {
-    setTimeframe(value);
+    if (onTimeFrameChange) {
+      onTimeFrameChange(value);
+    } else {
+      setLocalTimeframe(value);
+    }
   };
   
   // Handle comparison asset change
@@ -93,7 +102,7 @@ const PerformanceComparison = ({ assetId, className = '' }: PerformanceCompariso
           <div>
             <div className="mb-1 text-sm text-gray-500">Timeframe</div>
             <Select 
-              value={timeframe} 
+              value={effectiveTimeframe} 
               onValueChange={handleTimeframeChange}
             >
               <SelectTrigger className="w-[120px]">
@@ -146,7 +155,6 @@ const PerformanceComparison = ({ assetId, className = '' }: PerformanceCompariso
             </div>
           ) : (
             <div style={{ height: 300 }}>
-              {/* Use the correct props based on your PriceChart component */}
               <PriceChart 
                 data={mainPrices}
                 comparisonData={showComparison ? comparisonPrices : undefined}

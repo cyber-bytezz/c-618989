@@ -10,6 +10,7 @@ import CryptoBattleArena from '@/components/CryptoBattleArena';
 import MarketPredictions from '@/components/MarketPredictions';
 import UserXPSystem from '@/components/UserXPSystem';
 import CryptoStorm from '../components/CryptoStorm';
+import CryptoTimeMachine from '@/components/CryptoTimeMachine';
 
 export default function Home() {
   const [assets, setAssets] = useState<AssetsResponse | null>(null);
@@ -50,6 +51,10 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
             <CryptoStorm />
             <MarketSentiment sentiment={marketSentiment} />
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+            <CryptoTimeMachine />
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
