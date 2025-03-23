@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { WatchlistProvider } from "./contexts/WatchlistContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { ThemeCustomizationProvider } from "./contexts/ThemeCustomizationContext";
+import { HelmetProvider } from "react-helmet-async";
 import Index from "./pages/Index";
 import AssetDetails from "./pages/AssetDetails";
 import NotFound from "./pages/NotFound";
@@ -23,23 +24,25 @@ const queryClient = new QueryClient({
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <ThemeCustomizationProvider>
-          <WatchlistProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/asset/:id" element={<AssetDetails />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </BrowserRouter>
-            </TooltipProvider>
-          </WatchlistProvider>
-        </ThemeCustomizationProvider>
-      </ThemeProvider>
+      <HelmetProvider>
+        <ThemeProvider>
+          <ThemeCustomizationProvider>
+            <WatchlistProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/asset/:id" element={<AssetDetails />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </BrowserRouter>
+              </TooltipProvider>
+            </WatchlistProvider>
+          </ThemeCustomizationProvider>
+        </ThemeProvider>
+      </HelmetProvider>
     </QueryClientProvider>
   );
 };

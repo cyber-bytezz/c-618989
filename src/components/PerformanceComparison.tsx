@@ -1,176 +1,187 @@
 
 import { useState, useEffect } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card } from '@/components/ui/card';
-import PriceChart from './PriceChart';
-import { fetchAssetHistory, formatPrice } from '@/lib/api';
-import { useTheme } from '../contexts/ThemeContext';
-import { TimeFrame, TimeFrameOption, AssetHistoryData } from '@/types';
-import { BarChart, TrendingUp, TrendingDown, Timer } from 'lucide-react';
-import LoadingSkeleton from './LoadingSkeleton';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { useQuery } from '@tanstack/react-query';
+import { fetchAssetHistory } from '@/lib/api';
+import { AssetHistoryData } from '@/types';
+import { PriceChart } from './PriceChart';
+import { Info } from 'lucide-react';
+
+interface PriceDataPoint {
+  date: Date;
+  value: number;
+}
 
 interface PerformanceComparisonProps {
   assetId: string;
-  timeFrame: TimeFrame;
-  onTimeFrameChange: (timeFrame: TimeFrame) => void;
+  className?: string;
 }
 
-// Define a type for the price data we'll use in the chart
-interface PriceDataPoint {
-  value: number;
-  time: number;
-}
-
-const PerformanceComparison = ({ 
-  assetId, 
-  timeFrame = 'd1',
-  onTimeFrameChange
-}: PerformanceComparisonProps) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [priceData, setPriceData] = useState<AssetHistoryData[]>([]);
-  const [comparisonData, setComparisonData] = useState<AssetHistoryData[]>([]);
+const PerformanceComparison = ({ assetId, className = '' }: PerformanceComparisonProps) => {
   const [comparisonAsset, setComparisonAsset] = useState('ethereum');
-  const { isDark } = useTheme();
+  const [timeframe, setTimeframe] = useState('d1');
+  const [showComparison, setShowComparison] = useState(true);
   
-  // Time frame options
-  const timeFrameOptions: TimeFrameOption[] = [
-    { value: 'h1', label: '1H' },
-    { value: 'h12', label: '12H' },
-    { value: 'd1', label: '1D' },
-    { value: 'w1', label: '1W' },
-    { value: 'm1', label: '1M' },
-  ];
+  // Fetch main asset data
+  const { data: mainAssetData, isLoading: mainLoading } = useQuery({
+    queryKey: ['assetHistory', assetId, timeframe],
+    queryFn: () => fetchAssetHistory(assetId, timeframe as any),
+  });
   
-  // Fetch price data for both assets
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!assetId) return;
-      
-      setIsLoading(true);
-      
-      try {
-        // Fetch main asset data
-        const mainData = await fetchAssetHistory(assetId, timeFrame);
-        setPriceData(mainData.data);
-        
-        // Fetch comparison asset data
-        const compareData = await fetchAssetHistory(comparisonAsset, timeFrame);
-        setComparisonData(compareData.data);
-      } catch (error) {
-        console.error("Error fetching asset history:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // Fetch comparison asset data
+  const { data: comparisonAssetData, isLoading: comparisonLoading } = useQuery({
+    queryKey: ['assetHistory', comparisonAsset, timeframe],
+    queryFn: () => fetchAssetHistory(comparisonAsset, timeframe as any),
+    enabled: showComparison,
+  });
+  
+  // Transform data for the chart
+  const transformHistoryData = (historyData: AssetHistoryData[] | undefined): PriceDataPoint[] => {
+    if (!historyData) return [];
     
-    fetchData();
-  }, [assetId, comparisonAsset, timeFrame]);
-  
-  // Calculate performance metrics
-  const calculatePerformance = (data: AssetHistoryData[]) => {
-    if (!data.length) return { change: 0, percentChange: 0 };
-    
-    const firstPrice = parseFloat(data[0].priceUsd);
-    const lastPrice = parseFloat(data[data.length - 1].priceUsd);
-    
-    const change = lastPrice - firstPrice;
-    const percentChange = (change / firstPrice) * 100;
-    
-    return { change, percentChange };
-  };
-  
-  const mainPerformance = calculatePerformance(priceData);
-  const comparisonPerformance = calculatePerformance(comparisonData);
-  
-  // Handle time frame change
-  const handleTimeFrameChange = (value: string) => {
-    onTimeFrameChange(value as TimeFrame);
-  };
-  
-  // Format the price change with the correct sign
-  const formatChange = (change: number) => {
-    const sign = change >= 0 ? '+' : '';
-    return `${sign}${change.toFixed(2)}%`;
-  };
-
-  // Convert price data to the format expected by the chart component
-  const formatChartData = (data: AssetHistoryData[]): PriceDataPoint[] => {
-    return data.map(d => ({
-      value: parseFloat(d.priceUsd),
-      time: d.time
+    return historyData.map(dataPoint => ({
+      date: new Date(dataPoint.time),
+      value: parseFloat(dataPoint.priceUsd)
     }));
   };
   
+  const mainPrices = transformHistoryData(mainAssetData?.data);
+  const comparisonPrices = transformHistoryData(comparisonAssetData?.data);
+  
+  // Calculate performance metrics
+  const calculatePerformance = (prices: PriceDataPoint[]): number => {
+    if (prices.length < 2) return 0;
+    const firstPrice = prices[0].value;
+    const lastPrice = prices[prices.length - 1].value;
+    return ((lastPrice - firstPrice) / firstPrice) * 100;
+  };
+  
+  const mainPerformance = calculatePerformance(mainPrices);
+  const comparisonPerformance = calculatePerformance(comparisonPrices);
+  
+  // Handle timeframe change
+  const handleTimeframeChange = (value: string) => {
+    setTimeframe(value);
+  };
+  
+  // Handle comparison asset change
+  const handleComparisonChange = (value: string) => {
+    setComparisonAsset(value);
+  };
+  
   return (
-    <div className={`neo-brutalist-sm rounded-xl p-4 ${isDark ? 'bg-gray-800 text-white' : 'bg-white'}`}>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <BarChart size={20} className="text-purple-500" />
-          <h3 className="font-bold">Performance Comparison</h3>
+    <Card className={`overflow-hidden ${className}`}>
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-lg">Performance Comparison</CardTitle>
+          <div className="flex items-center space-x-2">
+            <Switch 
+              id="comparison-toggle"
+              checked={showComparison}
+              onCheckedChange={setShowComparison}
+            />
+            <Label htmlFor="comparison-toggle">Compare</Label>
+          </div>
+        </div>
+      </CardHeader>
+      
+      <CardContent>
+        <div className="flex flex-wrap gap-4 mb-4 justify-between">
+          <div>
+            <div className="mb-1 text-sm text-gray-500">Timeframe</div>
+            <Select 
+              value={timeframe} 
+              onValueChange={handleTimeframeChange}
+            >
+              <SelectTrigger className="w-[120px]">
+                <SelectValue placeholder="Timeframe" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="h1">1 Hour</SelectItem>
+                <SelectItem value="h12">12 Hours</SelectItem>
+                <SelectItem value="d1">1 Day</SelectItem>
+                <SelectItem value="w1">1 Week</SelectItem>
+                <SelectItem value="m1">1 Month</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          {showComparison && (
+            <div>
+              <div className="mb-1 text-sm text-gray-500">Compare with</div>
+              <Select 
+                value={comparisonAsset} 
+                onValueChange={handleComparisonChange}
+              >
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Select Asset" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="bitcoin">Bitcoin</SelectItem>
+                  <SelectItem value="ethereum">Ethereum</SelectItem>
+                  <SelectItem value="ripple">XRP</SelectItem>
+                  <SelectItem value="cardano">Cardano</SelectItem>
+                  <SelectItem value="solana">Solana</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
         
-        <Tabs defaultValue={timeFrame} onValueChange={handleTimeFrameChange}>
-          <TabsList>
-            {timeFrameOptions.map(option => (
-              <TabsTrigger key={option.value} value={option.value}>
-                {option.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-      </div>
-      
-      {isLoading ? (
-        <LoadingSkeleton className="h-[300px]" />
-      ) : (
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <Card className="p-3 bg-indigo-50 dark:bg-indigo-900/30">
-              <div className="text-sm text-gray-500 dark:text-gray-400">Main Asset</div>
-              <div className="text-lg font-semibold mt-1">{assetId.toUpperCase()}</div>
-              <div className={`flex items-center mt-2 ${
-                mainPerformance.percentChange >= 0 ? 'text-green-600' : 'text-red-600'
-              }`}>
-                {mainPerformance.percentChange >= 0 ? (
-                  <TrendingUp size={16} className="mr-1" />
-                ) : (
-                  <TrendingDown size={16} className="mr-1" />
-                )}
-                <span>{formatChange(mainPerformance.percentChange)}</span>
+        {/* Price chart */}
+        <div className="relative h-64">
+          {(mainLoading || (showComparison && comparisonLoading)) ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-50 dark:bg-gray-900/50 rounded-md">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : mainPrices.length === 0 ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-50 dark:bg-gray-900/50 rounded-md">
+              <div className="flex items-center text-gray-500">
+                <Info className="w-4 h-4 mr-2" />
+                <span>No data available</span>
               </div>
-            </Card>
-            
-            <Card className="p-3 bg-purple-50 dark:bg-purple-900/30">
-              <div className="text-sm text-gray-500 dark:text-gray-400">Comparison</div>
-              <div className="text-lg font-semibold mt-1">{comparisonAsset.toUpperCase()}</div>
-              <div className={`flex items-center mt-2 ${
-                comparisonPerformance.percentChange >= 0 ? 'text-green-600' : 'text-red-600'
-              }`}>
-                {comparisonPerformance.percentChange >= 0 ? (
-                  <TrendingUp size={16} className="mr-1" />
-                ) : (
-                  <TrendingDown size={16} className="mr-1" />
-                )}
-                <span>{formatChange(comparisonPerformance.percentChange)}</span>
-              </div>
-            </Card>
-          </div>
-          
-          {/* Price chart for comparison */}
-          <PriceChart 
-            mainPrices={formatChartData(priceData)} 
-            comparisonPrices={formatChartData(comparisonData)}
-            showComparison={true}
-            height={220}
-          />
-          
-          <div className="text-xs flex items-center justify-center text-gray-500 dark:text-gray-400">
-            <Timer size={12} className="mr-1" />
-            <span>Last updated: {new Date().toLocaleTimeString()}</span>
-          </div>
+            </div>
+          ) : (
+            <div style={{ height: 300 }}>
+              {/* Use the correct props based on your PriceChart component */}
+              <PriceChart 
+                data={mainPrices}
+                comparisonData={showComparison ? comparisonPrices : undefined}
+                height={300}
+                mainLabel={assetId.charAt(0).toUpperCase() + assetId.slice(1)}
+                comparisonLabel={comparisonAsset.charAt(0).toUpperCase() + comparisonAsset.slice(1)}
+              />
+            </div>
+          )}
         </div>
-      )}
-    </div>
+        
+        {/* Performance metrics */}
+        <div className="grid grid-cols-2 gap-4 mt-4">
+          <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
+            <div className="text-sm text-gray-500 mb-1">
+              {assetId.charAt(0).toUpperCase() + assetId.slice(1)}
+            </div>
+            <div className={`text-lg font-medium ${mainPerformance >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+              {mainPerformance.toFixed(2)}%
+            </div>
+          </div>
+          
+          {showComparison && (
+            <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
+              <div className="text-sm text-gray-500 mb-1">
+                {comparisonAsset.charAt(0).toUpperCase() + comparisonAsset.slice(1)}
+              </div>
+              <div className={`text-lg font-medium ${comparisonPerformance >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                {comparisonPerformance.toFixed(2)}%
+              </div>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
